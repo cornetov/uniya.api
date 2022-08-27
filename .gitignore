@@ -49,3 +49,6 @@ uniya/.vs/Uniya.Core/v17/.suo
 /xl/test/UnitTests/.vs/xlUnitTests
 /xl/test/UnitTests/bin/Debug/net6.0
 /xl/test/UnitTests/obj
+Web/ClientApp/package-lock.json
+Web/ClientApp/.env
+Web/ClientApp/.env.development
