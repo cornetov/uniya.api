@@ -29,6 +29,7 @@ public class UserService : IUserService
         _appSettings = options.Value;
         _userContext = new UserContext(_appSettings);
     }
+
     //private readonly IHttpContextAccessor _httpContextAccessor;
 
     //public UserService(IHttpContextAccessor httpContextAccessor)

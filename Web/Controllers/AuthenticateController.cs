@@ -12,6 +12,7 @@ using Uniya.Web.Models;
 
 namespace Uniya.Web.Controllers
 {
+    /// <summary>Authenticate.</summary>
     [ApiController]
     [Route("api/auth")]
     [Produces("application/json")]
