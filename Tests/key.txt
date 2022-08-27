@@ -1,0 +1,12 @@
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NTY3ODkwMTIzIiwibmFtZSI6IlNpbW9uIENvcm5ldCIsImlhdCI6ODgwODE1NjYxMjV9.J7oLLJKxVEvgBhk6zVLryZzI11Y-_pmpN4C9M_der1A
+
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+
+{
+  "sub": "4567890123",
+  "name": "Simon Cornet",
+  "iat": 88081566125
+}
