@@ -121,7 +121,7 @@ export class Navigate extends React.Component<NavigateProps, NavigateState> {
                     <div className="navbar-start">
                         <div className="navbar-start">
                             <Link className="navbar-item" to="/chat">{Localizer.term("Chat")}</Link>
-                            <Link className="navbar-item" to="/counter">{Localizer.term("Counter")}</Link>
+                            <Link className="navbar-item is-active" to="/counter">{Localizer.term("Counter")}</Link>
                             <Link className="navbar-item" to="/fetch">{Localizer.term("Fetch")}</Link>
                         </div>
                     </div>

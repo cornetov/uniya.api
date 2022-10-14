@@ -1,6 +1,5 @@
 ﻿namespace Uniya.Web.Models;
 
-
 public class UserLogin
 {
     public string userName { get; set; } = string.Empty;
