@@ -4,6 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
+using _Id = System.Guid;
+
 namespace Uniya.Core;
 
 // ----------------------------------------------------------------------------------------
@@ -27,7 +29,7 @@ public interface IRole : IActiveDB, ITitleDB, INoteDB
 {
     /// <summary>Gets or sets parent role.</summary>
     [ForeignKey("Role")]
-    long ParentId { get; set; }
+    _Id ParentId { get; set; }
 }
 
 /// <summary>Solutions.</summary>
@@ -37,12 +39,12 @@ public interface ISolution : ITitleDB
     /// <summary>Gets or sets role identifier.</summary>
     [Required]
     [ForeignKey("Role")]
-    long RoleId { get; set; }
+    _Id RoleId { get; set; }
 
     /// <summary>Gets or sets parent solution identifier.</summary>
     [Required]
     [ForeignKey("Solution")]
-    long ParentId { get; set; }
+    _Id ParentId { get; set; }
 }
 
 #endregion
@@ -89,7 +91,7 @@ public interface IAddress : IDB
 
     /// <summary>Gets or sets parent address.</summary>
     [ForeignKey("Address")]
-    long ParentId { get; set; }
+    _Id ParentId { get; set; }
 }
 
 /// <summary>Persons.</summary>
@@ -122,10 +124,10 @@ public interface IPerson : IDB
     long OfficialAddressId { get; set; }
     /// <summary>Gets or sets real address identifier of this person.</summary>
     [ForeignKey("Address")]
-    long RealAddressId { get; set; }
+    _Id RealAddressId { get; set; }
     /// <summary>Gets or sets alternative address identifier of this person.</summary>
     [ForeignKey("Address")]
-    long AlternativeAddressId { get; set; }
+    _Id AlternativeAddressId { get; set; }
 }
 
 #endregion
@@ -177,7 +179,7 @@ public interface IUser : IActiveDB
     /// <summary>Gets or sets user's person identifier.</summary>
     [Unique]
     [ForeignKey("Person")]
-    long PersonId { get; set; }
+    _Id PersonId { get; set; }
 }
 
 /// <summary>User's roles.</summary>
@@ -186,7 +188,7 @@ public interface IUserSession : IActiveDB
     /// <summary>Gets or sets user identifier.</summary>
     [Required]
     [ForeignKey("User")]
-    long UserId { get; set; }
+    _Id UserId { get; set; }
     /// <summary>Gets or sets session refresh GUID.</summary>
     [Required]
     string RefreshGuid { get; set; }
@@ -206,11 +208,11 @@ public interface IUserRole : IActiveDB, INoteDB
     /// <summary>Gets or sets user identifier.</summary>
     [Unique("UR")]
     [ForeignKey("User")]
-    long UserId { get; set; }
+    _Id UserId { get; set; }
     /// <summary>Gets or sets role identifier.</summary>
     [Unique("UR")]
     [ForeignKey("Role")]
-    long RoleId { get; set; }
+    _Id RoleId { get; set; }
 }
 
 #endregion
@@ -342,12 +344,12 @@ public interface IFile : IActiveDB, INoteDB
     /// <summary>Gets or sets access role identifier.</summary>
     [Unique("FF")]
     [ForeignKey("Folder")]
-    long FolderId { get; set; }
+    _Id FolderId { get; set; }
 
     /// <summary>Gets or sets access role identifier.</summary>
     [Required]
     [ForeignKey("Role")]
-    long AccessRoleId { get; set; }
+    _Id AccessRoleId { get; set; }
 }
 
 #endregion
@@ -376,10 +378,10 @@ public interface ICompany : IActiveDB, ITitleDB, INoteDB
 
     /// <summary>Gets or sets official address identifier of this company.</summary>
     [ForeignKey("Address")]
-    long OfficialAddressId { get; set; }
+    _Id OfficialAddressId { get; set; }
     /// <summary>Gets or sets real address identifier of this company.</summary>
     [ForeignKey("Address")]
-    long RealAddressId { get; set; }
+    _Id RealAddressId { get; set; }
 }
 
 /// <summary>The employee of the company.</summary>
@@ -391,12 +393,12 @@ public interface IEmployee : IActiveDB, ITitleDB, INoteDB
     /// <summary>Gets or sets role identifier.</summary>
     [Required]
     [ForeignKey("Company")]
-    long CompanyId { get; set; }
+    _Id CompanyId { get; set; }
 
     /// <summary>Gets or sets user's person identifier.</summary>
     [Required]
     [ForeignKey("Person")]
-    long PersonId { get; set; }
+    _Id PersonId { get; set; }
 }
 
 #endregion
@@ -438,11 +440,111 @@ public interface ITopic : IActiveDB, ITitleDB, INoteDB
 
     /// <summary>Gets or sets company identifier.</summary>
     [ForeignKey("Company")]
-    long CompanyId { get; set; }
+    _Id CompanyId { get; set; }
 
     /// <summary>Gets or sets parent category.</summary>
     [ForeignKey("Topic")]
-    long ParentId { get; set; }
+    _Id ParentId { get; set; }
+}
+
+#endregion
+
+// ----------------------------------------------------------------------------------------
+#region ** entity support
+
+/// <summary>
+/// The field type.
+/// </summary>
+public enum XFieldType
+{
+    /// <summary>Integer 128 bit.</summary>
+    Integer,
+    /// <summary>Big float,</summary>
+    Float,
+    /// <summary>Start and end dates.</summary>
+    Guid,
+    /// <summary>Exactly DateTime.</summary>
+    DateTime,
+    /// <summary>Start and end dates.</summary>
+    Period,
+    /// <summary>Link (as identifier) to object of entity.</summary>
+    Link,
+    /// <summary>Link (as identifier) to image.</summary>
+    Image,
+    /// <summary>Link (as identifier) to text.</summary>
+    Text,
+    /// <summary>Link (as identifier) to translated text.</summary>
+    Translated,
+    /// <summary>Link (as identifier) to user.</summary>
+    User,
+    /// <summary>Link (as identifier) to role.</summary>
+    Role,
+}
+
+/// <summary>The entity.</summary>
+public interface IEntity : IActiveDB, ITitleDB, INoteDB
+{
+    /// <summary>Gets or sets role identifier.</summary>
+    [Required]
+    [ForeignKey("Role")]
+    _Id RoleId { get; set; }
+
+    /// <summary>Gets or sets topic type.</summary>
+    [Required]
+    XFieldType Type { get; set; }
+
+    /// <summary>Gets or sets topic context.</summary>
+    [Required]
+    DateTimeOffset Start { get; set; }
+    /// <summary>Gets or sets topic context.</summary>
+    [Required]
+    DateTimeOffset End { get; set; }
+
+    /// <summary>Gets or sets topic context.</summary>
+    string Context { get; set; }
+
+    /// <summary>Gets or sets parent category.</summary>
+    [ForeignKey("Topic")]
+    _Id ParentId { get; set; }
+}
+
+/// <summary>The field.</summary>
+public interface IField : IActiveDB, ITitleDB, INoteDB
+{
+    /// <summary>Gets or sets role identifier.</summary>
+    [Required]
+    [ForeignKey("Entity")]
+    _Id EntityId { get; set; }
+
+    /// <summary>Gets or sets this field type.</summary>
+    [Required]
+    XFieldType Type { get; set; }
+
+    /// <summary>Gets or sets topic context.</summary>
+    [Required]
+    DateTimeOffset Start { get; set; }
+    /// <summary>Gets or sets topic context.</summary>
+    [Required]
+    DateTimeOffset End { get; set; }
+
+    /// <summary>Gets or sets topic context.</summary>
+    string Format { get; set; }
+}
+
+/// <summary>The object.</summary>
+public interface IObject
+{
+    /// <summary>Gets or sets role identifier.</summary>
+    [Key]
+    _Id EntityId { get; set; }
+
+    /// <summary>Gets or sets role identifier.</summary>
+    [Key]
+    _Id FieldId { get; set; }
+
+    /// <summary>Gets or sets topic context.</summary>
+    //[Length(16)]
+    byte[] Value { get; set; }
 }
 
 #endregion

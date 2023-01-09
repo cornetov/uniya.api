@@ -1,17 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30320.27
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uniya.Core", "Core\Uniya.Core.csproj", "{5ABD424E-2964-4E63-B4AA-0EAD252909F7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Test", "Tests\Core\Core.Test.csproj", "{711299A3-2A08-4698-A58B-0C4897054D26}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uniya.Connectors.Sqlite", "Connectors\Sqlite\Uniya.Connectors.Sqlite.csproj", "{14DEE48D-0CD8-4B13-962C-48282636133B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uniya.Connectors.Bitrix24", "Connectors\Bitrix24\Uniya.Connectors.Bitrix24.csproj", "{BF521D49-8B6B-4610-BC3B-608FE9903EB2}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uniya.Connectors.SharePoint", "Connectors\SharePoint\Uniya.Connectors.SharePoint.csproj", "{23C726AC-4C2A-44DC-A1BE-3A2D89BD9EFB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uniya.Connectors.MsSql", "Connectors\MsSql\Uniya.Connectors.MsSql.csproj", "{A94FE2FF-E975-40F2-B28B-4DFFDE8E398B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,22 +19,14 @@ Global
 		{5ABD424E-2964-4E63-B4AA-0EAD252909F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5ABD424E-2964-4E63-B4AA-0EAD252909F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5ABD424E-2964-4E63-B4AA-0EAD252909F7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{711299A3-2A08-4698-A58B-0C4897054D26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{711299A3-2A08-4698-A58B-0C4897054D26}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{711299A3-2A08-4698-A58B-0C4897054D26}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{711299A3-2A08-4698-A58B-0C4897054D26}.Release|Any CPU.Build.0 = Release|Any CPU
 		{14DEE48D-0CD8-4B13-962C-48282636133B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{14DEE48D-0CD8-4B13-962C-48282636133B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14DEE48D-0CD8-4B13-962C-48282636133B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14DEE48D-0CD8-4B13-962C-48282636133B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BF521D49-8B6B-4610-BC3B-608FE9903EB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BF521D49-8B6B-4610-BC3B-608FE9903EB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BF521D49-8B6B-4610-BC3B-608FE9903EB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BF521D49-8B6B-4610-BC3B-608FE9903EB2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{23C726AC-4C2A-44DC-A1BE-3A2D89BD9EFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{23C726AC-4C2A-44DC-A1BE-3A2D89BD9EFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{23C726AC-4C2A-44DC-A1BE-3A2D89BD9EFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{23C726AC-4C2A-44DC-A1BE-3A2D89BD9EFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A94FE2FF-E975-40F2-B28B-4DFFDE8E398B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A94FE2FF-E975-40F2-B28B-4DFFDE8E398B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A94FE2FF-E975-40F2-B28B-4DFFDE8E398B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A94FE2FF-E975-40F2-B28B-4DFFDE8E398B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

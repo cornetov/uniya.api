@@ -4,6 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Threading.Tasks;
 
+using _Id = System.Guid;
+
 // C# 10
 namespace Uniya.Core;
 
@@ -26,7 +28,7 @@ public interface IDB
 {
     /// <summary>Gets object identifier.</summary>
     [Key]
-    long Id { get; set; }
+    _Id Id { get; set; }
     /// <summary>Gets UTC date and time of create.</summary>
     [Required]
     DateTime Created { get; set; }
@@ -72,11 +74,11 @@ public interface INoteDB : IDB
     /// <summary>Gets user that created a record.</summary>
     [Required]
     [ForeignKey("User")]
-    long CreatedUserId { get; set; }
+    _Id CreatedUserId { get; set; }
     /// <summary>Gets user that modified a record.</summary>
     [Required]
     [ForeignKey("User")]
-    long ModifiedUserId { get; set; }
+    _Id ModifiedUserId { get; set; }
 }
 
 #endregion
