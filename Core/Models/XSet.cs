@@ -3,7 +3,11 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Collections.Generic;
 
+#if ID_GUID
 using _Id = System.Guid;
+#else
+using _Id = System.Int64;
+#endif
 
 namespace Uniya.Core
 {
@@ -213,14 +217,15 @@ namespace Uniya.Core
         public XSet()
         {
             // base
-            AddSet(Persons = new XSetCollection<IPerson>());
+            //AddSet(Persons = new XSetCollection<IPerson>());
             AddSet(Users = new XSetCollection<IUser>());
             AddSet(Roles = new XSetCollection<IRole>());
             AddSet(UserRoles = new XSetCollection<IUserRole>());
             AddSet(UserSessions = new XSetCollection<IUserSession>());
-            AddSet(Connections = new XSetCollection<IConnection>());
-            AddSet(Tasks = new XSetCollection<ITask>());
-            AddSet(Parameters = new XSetCollection<IParameter>());
+
+            //AddSet(Connections = new XSetCollection<IConnection>());
+            //AddSet(Tasks = new XSetCollection<ITask>());
+            //AddSet(Parameters = new XSetCollection<IParameter>());
             AddSet(Scripts = new XSetCollection<IScript>());
         }
 
@@ -230,17 +235,17 @@ namespace Uniya.Core
             notify.CollectionChanged += OnCollectionChanged;
         }
 
-        // base
-        public XSetCollection<IPerson> Persons { get; private set; }
+        // database model
+        //public XSetCollection<IPerson> Persons { get; private set; }
         public XSetCollection<IUser> Users { get; private set; }
         public XSetCollection<IRole> Roles { get; private set; }
         public XSetCollection<IUserRole> UserRoles { get; private set; }
         public XSetCollection<IUserSession> UserSessions { get; private set; }
 
         public XSetCollection<IConnection> Connections { get; private set; }
-        public XSetCollection<ITask> Tasks { get; private set; }
+        //public XSetCollection<ITask> Tasks { get; private set; }
 
-        public XSetCollection<IParameter> Parameters { get; private set; }
+        //public XSetCollection<IParameter> Parameters { get; private set; }
         public XSetCollection<IScript> Scripts { get; private set; }
 
         #endregion
@@ -387,17 +392,21 @@ namespace Uniya.Core
         public void Fill()
         {
             // --------------------------------------------------------------
-            IPerson person;
+//            IPerson person;
 
             var dtNow = DateTime.Now;
 
-            person = XProxy.Get<IPerson>();
-            person.Id = 1;
-            person.FirstName = "Administrator";
-            person.LastName = "Unknown";
-            person.Created = dtNow;
-            person.Modified = dtNow;
-            Persons.Add(person);
+//            person = XProxy.Get<IPerson>();
+//#if ID_GUID
+//            person.Id = Guid.Parse("d16f4eaf-1239-45b2-b212-3497cac73546");
+//#else
+//            person.Id = 1;
+//#endif
+//            person.FirstName = "Administrator";
+//            person.LastName = "Unknown";
+//            person.Created = dtNow;
+//            person.Modified = dtNow;
+//            Persons.Add(person);
 
             // --------------------------------------------------------------
             IUser user;
@@ -405,7 +414,12 @@ namespace Uniya.Core
             XProxy.TestPassword("Passw0rd", out string hash, out string salt);
 
             user = XProxy.Get<IUser>();
+#if ID_GUID
+            user.Id = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+#else
             user.Id = 1;
+            //user.PersonId = 1;
+#endif
             user.Name = "Admin";
             user.PsswdHash = hash;
             user.PsswdSalt = salt;
@@ -414,7 +428,6 @@ namespace Uniya.Core
             user.Phone = "+7(910)5540021";
             user.IsPhoneChecked = true;
             user.IsActive = true;
-            user.PersonId = 1;
             user.Created = dtNow;
             user.Modified = dtNow;
             Users.Add(user);
@@ -423,155 +436,146 @@ namespace Uniya.Core
             IRole role;
 
             role = XProxy.Get<IRole>();
+#if ID_GUID
+            role.Id = Guid.Parse("ac9df305-4631-4a45-bb46-1e90d3775a14");
+            role.CreatedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+            role.ModifiedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+#else
             role.Id = 1;
+            role.CreatedUserId = 1;
+            role.ModifiedUserId = 1;
+#endif
             role.Name = XRole.Reader;
             role.Title = "Readers";
             role.Description = "Minimal rights for read only";
             role.IsActive = true;
             role.Created = dtNow;
-            role.CreatedUserId = 1;
             role.Modified = dtNow;
-            role.ModifiedUserId = 1;
             Roles.Add(role);
 
             role = XProxy.Get<IRole>();
+#if ID_GUID
+            role.Id = Guid.Parse("b20f5556-d065-4ebd-923b-b0f6111be6d3");
+            role.ParentId = Guid.Parse("ac9df305-4631-4a45-bb46-1e90d3775a14");
+            role.CreatedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+            role.ModifiedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+#else
             role.Id = 2;
+            role.ParentId = 1;
+            role.CreatedUserId = 1;
+            role.ModifiedUserId = 1;
+#endif
             role.Name = XRole.Writer;
             role.Title = "Writers";
             role.Description = "Optimal rights for create, update or delete";
             role.IsActive = true;
-            role.ParentId = 1;
             role.Created = dtNow;
-            role.CreatedUserId = 1;
             role.Modified = dtNow;
-            role.ModifiedUserId = 1;
             Roles.Add(role);
 
             role = XProxy.Get<IRole>();
+#if ID_GUID
+            role.Id = Guid.Parse("cc12dda6-c98a-4ec5-969b-793019c2ca3a");
+            role.ParentId = Guid.Parse("ac9df305-4631-4a45-bb46-1e90d3775a14");
+            role.CreatedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+            role.ModifiedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+#else
             role.Id = 3;
+            role.ParentId = 2;
+            role.CreatedUserId = 1;
+            role.ModifiedUserId = 1;
+#endif
             role.Name = XRole.Administrator;
             role.Title = "Administrators";
             role.Description = "Full rights";
             role.IsActive = true;
-            role.ParentId = 2;
             role.Created = dtNow;
-            role.CreatedUserId = 1;
             role.Modified = dtNow;
-            role.ModifiedUserId = 1;
             Roles.Add(role);
 
             // --------------------------------------------------------------
             IUserRole userRole;
 
             userRole = XProxy.Get<IUserRole>();
+#if ID_GUID
+            userRole.Id = Guid.Parse("df0d7cd1-60e2-4ab9-9caf-d11f7cdfd3ca");
+            userRole.UserId = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
+            userRole.RoleId = Guid.Parse("cc12dda6-c98a-4ec5-969b-793019c2ca3a");
+            userRole.CreatedUserId = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
+            userRole.ModifiedUserId = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
+#else
             userRole.Id = 1;
             userRole.UserId = 1;
             userRole.RoleId = 3;
+            userRole.CreatedUserId = 1;
+            userRole.ModifiedUserId = 1;
+#endif
             userRole.IsActive = true;
             userRole.Created = dtNow;
-            userRole.CreatedUserId = 1;
             userRole.Modified = dtNow;
-            userRole.ModifiedUserId = 1;
             userRole.Note = "Default user's role";
             UserRoles.Add(userRole);
 
             // --------------------------------------------------------------
-            IConnection connection;
+//            IConnection connection;
 
-            connection = XProxy.Get<IConnection>();
-            connection.Id = 1;
-            connection.Name = "base";
-            connection.Title = "Base";
-            connection.Description = "Default SQLite connection";
-            connection.HostUrl = "https://api.triotour.com/";
-            connection.ClassName = "Uniya.Connectors.Sqlite.SqliteConnector";
-            connection.ComplexCode = XProxy.Encrypt(@"Data Source = (LocalDB)\mssqllocaldb; Initial Catalog = master; Integrated Security = True;");
-            connection.IsActive = true;
-            connection.Created = dtNow;
-            connection.CreatedUserId = 1;
-            connection.Modified = dtNow;
-            connection.ModifiedUserId = 1;
-            Connections.Add(connection);
-
-            connection = XProxy.Get<IConnection>();
-            connection.Id = 2;
-            connection.Name = "trio_tour";
-            connection.Title = "triotour.com";
-            connection.Description = "Company TrioTour MS SQL connection";
-            connection.HostUrl = "https://api.triotour.com/api/data/trio_tour";
-            connection.ClassName = "Uniya.Connectors.MsSql.MsSqlConnector";
-            connection.ComplexCode = XProxy.Encrypt("data source=ms-sql-7.in-solve.ru;initial catalog=1gb_uniya2;User ID=1gb_triotour;Password=b7ac0e623rty;");
-            connection.IsActive = false;
-            connection.Created = dtNow;
-            connection.CreatedUserId = 1;
-            connection.Modified = dtNow;
-            connection.ModifiedUserId = 1;
-            Connections.Add(connection);
-
-            connection = XProxy.Get<IConnection>();
-            connection.Id = 3;
-            connection.Name = "practic_share_point";
-            connection.Title = "SharePoint Register";
-            connection.Description = "SharePoint Register connection";
-            connection.HostUserName = "VDoroshenko@a-practic.ru";
-            connection.HostPassword = XProxy.Encrypt("Practic8");
-            connection.HostUrl = "https://practic.sharepoint.com/sites/register";
-            connection.ClassName = "Uniya.Connectors.SharePoint.SharePointConnector";
-            connection.ComplexCode = XProxy.Encrypt("VDoroshenko@a-practic.ru|Practic8");
-            connection.IsActive = true;
-            connection.Created = dtNow;
-            connection.CreatedUserId = 1;
-            connection.Modified = dtNow;
-            connection.ModifiedUserId = 1;
-            Connections.Add(connection);
-
-            connection = XProxy.Get<IConnection>();
-            connection.Id = 4;
-            connection.Name = "finguru_bitrix24";
-            connection.Title = "SharePoint Register";
-            connection.Description = "SharePoint Register connection";
-            connection.HostUrl = "https://portal.finguru.com/api";
-            connection.ClassName = "Uniya.Connectors.Bitrix24.Bitrix24Connector";
-            connection.ComplexCode = XProxy.Encrypt("local.57fe05cb295182.55185886|6MTR5Go2xRVjWcHfTlKhvM5AshunytE9Ml739omM66z92jwVHv");
-            connection.IsActive = false;
-            connection.Created = dtNow;
-            connection.CreatedUserId = 1;
-            connection.Modified = dtNow;
-            connection.ModifiedUserId = 1;
-            Connections.Add(connection);
+//            connection = XProxy.Get<IConnection>();
+//#if ID_GUID
+//            connection.Id = Guid.Parse("c774b6ec-5cb6-4174-93a5-d13af6bd72fa");
+//            connection.CreatedUserId = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
+//            connection.ModifiedUserId = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
+//#else
+//            connection.Id = 1;
+//            connection.CreatedUserId = 1;
+//            connection.ModifiedUserId = 1;
+//#endif
+//            connection.Name = "base";
+//            connection.Title = "Base";
+//            connection.Description = "Default SQLite connection";
+//            connection.HostUrl = "https://api.triotour.com/";
+//            connection.ClassName = "Uniya.Connectors.Sqlite.SqliteConnector";
+//            connection.ComplexCode = XProxy.Encrypt(@"Data Source = (LocalDB)\mssqllocaldb; Initial Catalog = master; Integrated Security = True;");
+//            connection.IsActive = true;
+//            connection.Created = dtNow;
+//            connection.Modified = dtNow;
+//            Connections.Add(connection);
 
             // --------------------------------------------------------------
-            ITask task;
+//            ITask task;
 
-            task = XProxy.Get<ITask>();
-            task.Id = 1;
-            task.Name = "Backup";
-            task.Title = "Backup";
-            task.Description = "Backup base storage";
-            task.ClassName = "Uniya.Tasks.Backup";
-            task.IsActive = false;
-            task.Created = dtNow;
-            task.CreatedUserId = 1;
-            task.Modified = dtNow;
-            task.ModifiedUserId = 1;
-            task.Note = "Backup";
-            Tasks.Add(task);
+//            task = XProxy.Get<ITask>();
+//#if ID_GUID
+//            task.Id = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
+//#else
+//            task.Id = 1;
+//#endif
+//            task.Name = "Backup";
+//            task.Title = "Backup";
+//            task.Description = "Backup base storage";
+//            task.ClassName = "Uniya.Tasks.Backup";
+//            task.IsActive = false;
+//            task.Created = dtNow;
+//            task.CreatedUserId = 1;
+//            task.Modified = dtNow;
+//            task.ModifiedUserId = 1;
+//            task.Note = "Backup";
+//            Tasks.Add(task);
 
             // --------------------------------------------------------------
-            IParameter parameter;
+            //IParameter parameter;
 
-            parameter = XProxy.Get<IParameter>();
-            parameter.Id = 1;
-            parameter.Name = "LastRegistryDate";
-            parameter.Title = "Registry date";
-            parameter.Description = "Last date and time of change registry";
-            parameter.Created = dtNow;
-            parameter.CreatedUserId = 1;
-            parameter.Modified = dtNow;
-            parameter.ModifiedUserId = 1;
-            parameter.Value = "2019-08-15T17:00:00";
-            parameter.Note = "Backup";
-            Parameters.Add(parameter);
+            //parameter = XProxy.Get<IParameter>();
+            //parameter.Id = 1;
+            //parameter.Name = "LastRegistryDate";
+            //parameter.Title = "Registry date";
+            //parameter.Description = "Last date and time of change registry";
+            //parameter.Created = dtNow;
+            //parameter.CreatedUserId = 1;
+            //parameter.Modified = dtNow;
+            //parameter.ModifiedUserId = 1;
+            //parameter.Value = "2019-08-15T17:00:00";
+            //parameter.Note = "Backup";
+            //Parameters.Add(parameter);
 
 
             //INSERT INTO[Person] ([Id], [FirstName], [SecondName], [LastName], [Birthday], [Phone], [Email], [Created], [Modified], [Note])

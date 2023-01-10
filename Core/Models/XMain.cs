@@ -4,7 +4,11 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
+#if ID_GUID
 using _Id = System.Guid;
+#else
+using _Id = System.Int64;
+#endif
 
 namespace Uniya.Core;
 
@@ -50,7 +54,7 @@ public interface ISolution : ITitleDB
 #endregion
 
 // ----------------------------------------------------------------------------------------
-#region ** person with addresses support
+#region ** addresses support
 
 /// <summary>
 /// Address type.
@@ -94,6 +98,7 @@ public interface IAddress : IDB
     _Id ParentId { get; set; }
 }
 
+/*
 /// <summary>Persons.</summary>
 public interface IPerson : IDB
 {
@@ -129,7 +134,7 @@ public interface IPerson : IDB
     [ForeignKey("Address")]
     _Id AlternativeAddressId { get; set; }
 }
-
+*/
 #endregion
 
 // ----------------------------------------------------------------------------------------
@@ -176,10 +181,10 @@ public interface IUser : IActiveDB
     // Gets or sets checked or no primary email address of this person.
     bool IsEmailChecked { get; set; }
 
-    /// <summary>Gets or sets user's person identifier.</summary>
-    [Unique]
-    [ForeignKey("Person")]
-    _Id PersonId { get; set; }
+    ///// <summary>Gets or sets user's person identifier.</summary>
+    //[Unique]
+    //[ForeignKey("Person")]
+    //_Id PersonId { get; set; }
 }
 
 /// <summary>User's roles.</summary>
@@ -255,30 +260,30 @@ public interface IConnection : ITitleDB, IRunDB, INoteDB
     string ConnectorTag { get; set; }
 }
 
-/// <summary>The task parameters.</summary>
-public interface ITask : ITitleDB, IRunDB, INoteDB
-{
-    /// <summary>Gets or sets autostart task flag.</summary>
-    bool Autostart { get; set; }
+///// <summary>The task parameters.</summary>
+//public interface ITask : ITitleDB, IRunDB, INoteDB
+//{
+//    /// <summary>Gets or sets autostart task flag.</summary>
+//    bool Autostart { get; set; }
 
-    /// <summary>Gets or sets start period in minutes.</summary>
-    int StartPeriod { get; set; }
+//    /// <summary>Gets or sets start period in minutes.</summary>
+//    int StartPeriod { get; set; }
 
-    /// <summary>Gets or sets list of the connections by names separated using '|' symbol.</summary>
-    string Connections { get; set; }
-}
+//    /// <summary>Gets or sets list of the connections by names separated using '|' symbol.</summary>
+//    string Connections { get; set; }
+//}
 
 #endregion
 
 // ----------------------------------------------------------------------------------------
 #region ** various parameters
 
-public interface IParameter : ITitleDB, INoteDB
-{
-    /// <summary>Gets or sets value of the parameter.</summary>
-    [Required]
-    string Value { get; set; }
-}
+//public interface IParameter : ITitleDB, INoteDB
+//{
+//    /// <summary>Gets or sets value of the parameter.</summary>
+//    [Required]
+//    string Value { get; set; }
+//}
 
 #endregion
 
@@ -356,7 +361,7 @@ public interface IFile : IActiveDB, INoteDB
 
 // ----------------------------------------------------------------------------------------
 #region ** companies and employees support
-
+/*
 /// <summary>The company.</summary>
 public interface ICompany : IActiveDB, ITitleDB, INoteDB
 {
@@ -400,12 +405,12 @@ public interface IEmployee : IActiveDB, ITitleDB, INoteDB
     [ForeignKey("Person")]
     _Id PersonId { get; set; }
 }
-
+*/
 #endregion
 
 // ----------------------------------------------------------------------------------------
 #region ** topics by categories support
-
+/*
 /// <summary>
 /// The topic type.
 /// </summary>
@@ -446,7 +451,7 @@ public interface ITopic : IActiveDB, ITitleDB, INoteDB
     [ForeignKey("Topic")]
     _Id ParentId { get; set; }
 }
-
+*/
 #endregion
 
 // ----------------------------------------------------------------------------------------
@@ -504,7 +509,7 @@ public interface IEntity : IActiveDB, ITitleDB, INoteDB
     string Context { get; set; }
 
     /// <summary>Gets or sets parent category.</summary>
-    [ForeignKey("Topic")]
+    [ForeignKey("Entity")]
     _Id ParentId { get; set; }
 }
 
@@ -520,10 +525,10 @@ public interface IField : IActiveDB, ITitleDB, INoteDB
     [Required]
     XFieldType Type { get; set; }
 
-    /// <summary>Gets or sets topic context.</summary>
+    /// <summary>Gets or sets field context.</summary>
     [Required]
     DateTimeOffset Start { get; set; }
-    /// <summary>Gets or sets topic context.</summary>
+    /// <summary>Gets or sets field context.</summary>
     [Required]
     DateTimeOffset End { get; set; }
 
@@ -543,7 +548,7 @@ public interface IObject
     _Id FieldId { get; set; }
 
     /// <summary>Gets or sets topic context.</summary>
-    //[Length(16)]
+    [MaxLength(16)]
     byte[] Value { get; set; }
 }
 

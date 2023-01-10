@@ -4,7 +4,11 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Threading.Tasks;
 
+#if ID_GUID
 using _Id = System.Guid;
+#else
+using _Id = System.Int64;
+#endif
 
 // C# 10
 namespace Uniya.Core;
@@ -144,7 +148,7 @@ public interface IEntitySet
 public interface IReadonlyData
 {
     // -------------------------------------------------------------------------------
-    #region ** select
+#region ** select
 
     /// <summary>
     /// Read one entity using identifier with all columns.
@@ -161,10 +165,10 @@ public interface IReadonlyData
     /// <returns>The entity collection.</returns>
     Task<XEntityCollection> Select(XQuery query);
 
-    #endregion
+#endregion
 
     // -------------------------------------------------------------------------------
-    #region ** schema
+#region ** schema
 
     /// <summary>
     /// Gets schema of the data.
@@ -173,7 +177,7 @@ public interface IReadonlyData
     /// <returns>The schema of the data.</returns>
     Task<ISchema> GetSchema(params string[] tableNames);
 
-    #endregion
+#endregion
 }
 
 /// <summary>
@@ -182,7 +186,7 @@ public interface IReadonlyData
 public interface ICrudData : IReadonlyData
 {
     //-----------------------------------------------------------------------------
-    #region ** create
+#region ** create
 
     /// <summary>
     /// Create entity object in database.
@@ -191,10 +195,10 @@ public interface ICrudData : IReadonlyData
     /// <returns>Without information.</returns>
     Task Create(params XEntity[] entities);
 
-    #endregion
+#endregion
 
     // -------------------------------------------------------------------------------
-    #region ** update
+#region ** update
 
     /// <summary>
     /// Update entity object in database.
@@ -203,10 +207,10 @@ public interface ICrudData : IReadonlyData
     /// <returns>Without information.</returns>
     Task Update(params XEntity[] entities);
 
-    #endregion
+#endregion
 
     // -------------------------------------------------------------------------------
-    #region ** delete
+#region ** delete
 
     /// <summary>
     /// Delete entity object in database.
@@ -224,7 +228,7 @@ public interface ICrudData : IReadonlyData
     /// <returns>Without information.</returns>
     Task Delete(string entityName, string key, params object[] ids);
 
-    #endregion
+#endregion
 }
 
 /// <summary>
@@ -233,7 +237,7 @@ public interface ICrudData : IReadonlyData
 public interface ITransactedData : ICrudData
 {
     //-----------------------------------------------------------------------------
-    #region ** transaction
+#region ** transaction
 
     /// <summary>
     /// Apply transaction in database.
@@ -242,7 +246,7 @@ public interface ITransactedData : ICrudData
     /// <returns>Without information.</returns>
     Task Transaction(IEntitySet iset);
 
-    #endregion
+#endregion
 }
 
 /// <summary>
@@ -251,7 +255,7 @@ public interface ITransactedData : ICrudData
 public interface IDesignData : ICrudData
 {
     // -------------------------------------------------------------------------------
-    #region ** design
+#region ** design
 
     /// <summary>
     /// Sets table schema of the database.
@@ -260,7 +264,7 @@ public interface IDesignData : ICrudData
     /// <returns>The changed schema of the data.</returns>
     Task<ISchema> SetSchema(ITableSchema tableSchema);
 
-    #endregion
+#endregion
 }
 
 #endregion

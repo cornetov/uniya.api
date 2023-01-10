@@ -55,14 +55,14 @@ public class JwtService : IJwtService
         // refresh token
         var guid = Guid.NewGuid();
         expires = dtNow.AddDays(_appSettings.LongInDays);
-        var dtBytes = BitConverter.GetBytes(expires.ToBinary());
+        var dtBytes = GetBytes(expires);
         var guidBytes = guid.ToByteArray();
         var data = new byte[40];
         Array.Copy(guidBytes, 0, data, 0, guidBytes.Length);
         Array.Copy(dtBytes, 0, data, 16, dtBytes.Length);
-        dtBytes = BitConverter.GetBytes(user.Id);
+        dtBytes = GetBytes(user.Id);
         Array.Copy(dtBytes, 0, data, 24, dtBytes.Length);
-        dtBytes = BitConverter.GetBytes(dtNow.ToBinary());
+        dtBytes = GetBytes(dtNow);
         Array.Copy(dtBytes, 0, data, 32, dtBytes.Length);
         data = XProxy.Encrypt(data);
 
@@ -85,6 +85,31 @@ public class JwtService : IJwtService
             accessToken = tokenHandler.WriteToken(token),
             refreshToken = Convert.ToBase64String(data)
         };
+    }
+
+    private static byte[] GetBytes(Guid value)
+    {
+        return value.ToByteArray();
+    }
+    private static byte[] GetBytes(DateTime value)
+    {
+        return BitConverter.GetBytes(value.ToBinary());
+    }
+    private static byte[] GetBytes(int value)
+    {
+        return BitConverter.GetBytes(value);
+    }
+    private static byte[] GetBytes(long value)
+    {
+        return BitConverter.GetBytes(value);
+    }
+    private static byte[] GetBytes(float value)
+    {
+        return BitConverter.GetBytes(value);
+    }
+    private static byte[] GetBytes(double value)
+    {
+        return BitConverter.GetBytes(value);
     }
 
     private static string GenerateRefreshToken()

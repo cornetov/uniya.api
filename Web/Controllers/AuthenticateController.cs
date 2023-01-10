@@ -46,7 +46,7 @@ public class AuthenticateController : ControllerBase
     {
         XProxy.TestPassword(request.password, out string hash, out string salt);
 
-        user.Id = 1;
+        //user.Id = 1;
         user.Name = request.userName;
         user.PsswdHash = hash;
         user.PsswdSalt = salt;
