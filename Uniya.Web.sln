@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uniya.Connectors.MsSql", "C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uniya.Connectors.Sqlite", "Connectors\Sqlite\Uniya.Connectors.Sqlite.csproj", "{BDB41D08-637F-449E-BE1D-7C04F9D1B670}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Uniya.Connectors.Npgsql", "Connectors\Npgsql\Uniya.Connectors.Npgsql.csproj", "{CF8AF2BB-013A-4235-8B93-7D77108A7313}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{BDB41D08-637F-449E-BE1D-7C04F9D1B670}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BDB41D08-637F-449E-BE1D-7C04F9D1B670}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BDB41D08-637F-449E-BE1D-7C04F9D1B670}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF8AF2BB-013A-4235-8B93-7D77108A7313}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF8AF2BB-013A-4235-8B93-7D77108A7313}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF8AF2BB-013A-4235-8B93-7D77108A7313}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF8AF2BB-013A-4235-8B93-7D77108A7313}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

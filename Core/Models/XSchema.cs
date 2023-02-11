@@ -10,6 +10,12 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Diagnostics;
 
+#if ID_GUID
+using _Id = System.Guid;
+#else
+using _Id = System.Int64;
+#endif
+
 namespace Uniya.Core;
 
 // -------------------------------------------------------------------------
@@ -26,17 +32,25 @@ public partial class XSchema : ISchema
     {
         Tables = new XCollection<ITableSchema, string>();
         Relations = new XCollection<IRelationSchema, string>();
-        CreatedTime = DateTime.Now;
+        Scripts = new XCollection<IScriptSchema, string>();
+        Created = DateTime.Now;
 
-        SchemaName = RootName = "root";
+        Name = RootName = "root";
         ItemName = "item";
         TypeName = "type";
         ResultName = "result";
         CollectionName = "_collection";
     }
 
+    /// <summary>Gets the object identifier.</summary>
+    public _Id Id { get; set; }
+    /// <summary>Gets UTC date and time of created.</summary>
+    public DateTime Created { get; set; }
+    /// <summary>Gets UTC date and time of modified.</summary>
+    public DateTime Modified { get; set; }
+
     /// <summary>Gets or sets logical entity name.</summary>
-    public string SchemaName { get; set; }
+    public string Name { get; set; }
     /// <summary>Gets or sets display name of the table.</summary>
     public string Title { get; set; }
     /// <summary>Gets or sets the primary value of the entity.</summary>
@@ -53,15 +67,17 @@ public partial class XSchema : ISchema
     /// <summary>Gets collection name of XML or JSON data.</summary>
     public string CollectionName { get; set; }
 
-    /// <summary>Gets or sets the data type for primary and foreign keys of the tables.</summary>
-    public XDataType KeyType { get; set; }
-    /// <summary>Gets or sets the created date and time of the schema.</summary>
-    public DateTime CreatedTime { get; set; }
+    public string Version { get; set; }
+
+    /// <summary>Gets or sets the flag of the active object.</summary>
+    public bool IsActive { get; set; }
 
     /// <summary>Gets a collection of table schema.</summary>
     public IList<ITableSchema> Tables { get; private set; }
     /// <summary>Gets a collection of one to many relation schema.</summary>
     public IList<IRelationSchema> Relations { get; private set; }
+    /// <summary>Gets a collection of table schema.</summary>
+    public IList<IScriptSchema> Scripts { get; private set; }
 
     /// <summary>Gets a table scheme by name.</summary>
     /// <param name="name">The table name.</param>
@@ -70,7 +86,7 @@ public partial class XSchema : ISchema
     {
         for (int i = 0; i < Tables.Count; i++)
         {
-            if (name.ToLower().Equals(Tables[i].TableName.ToLower()))
+            if (name.ToLower().Equals(Tables[i].Name.ToLower()))
                 return Tables[i];
         }
         return null;
@@ -83,7 +99,7 @@ public partial class XSchema : ISchema
     /// <returns>A string that represents the current object.</returns>
     public override string ToString()
     {
-        var name = string.IsNullOrEmpty(SchemaName) ? "NO_NAME_SCHEMA" : SchemaName;
+        var name = string.IsNullOrEmpty(Name) ? "NO_NAME_SCHEMA" : Name;
         return $"SCHEMA [{name}:{Tables.Count}]";
     }
 
@@ -97,7 +113,7 @@ public partial class XSchema : ISchema
         {
             // foreign keys
             Dictionary<string, bool> keys;
-            var tableName = Tables[idx].TableName.ToLower();
+            var tableName = Tables[idx].Name.ToLower();
             if (cache.ContainsKey(tableName))
             {
                 keys = cache[tableName];
@@ -138,7 +154,7 @@ public partial class XSchema : ISchema
                 {
                     // logical name of the other table
                     var cross = false;
-                    var otherName = Tables[i].TableName.ToLower();
+                    var otherName = Tables[i].Name.ToLower();
                     foreach (var column in Tables[i].Columns)
                     {
                         if ((column.Requirement & XRequirementOptions.ForeignKey) != 0)
@@ -371,8 +387,15 @@ public partial class XRelationSchema : IRelationSchema
         Delete = XReferenceType.Restrict;
     }
 
+    /// <summary>Gets the object identifier.</summary>
+    public _Id Id { get; set; }
+    /// <summary>Gets UTC date and time of created.</summary>
+    public DateTime Created { get; set; }
+    /// <summary>Gets UTC date and time of modified.</summary>
+    public DateTime Modified { get; set; }
+
     /// <summary>Gets or sets logical entity (table) name.</summary>
-    public string RelationName { get; set; }
+    public string Name { get; set; }
     ///// <summary>Gets or sets the schema name of the ralation.</summary>
     //public string SchemaName { get; set; }
 
@@ -396,7 +419,7 @@ public partial class XRelationSchema : IRelationSchema
     /// <returns>A string that represents the current object.</returns>
     public override string ToString()
     {
-        return $"RELATION [{RelationName}:{FromTable}/{ColumnName}->{ToTable}]";
+        return $"RELATION [{Name}:{FromTable}/{ColumnName}->{ToTable}]";
     }
 }
 
@@ -429,8 +452,15 @@ public partial class XTableSchema : ITableSchema
         Indexes = new ObservableCollection<IIndexSchema>();
     }
 
+    /// <summary>Gets the object identifier.</summary>
+    public _Id Id { get; set; }
+    /// <summary>Gets UTC date and time of created.</summary>
+    public DateTime Created { get; set; }
+    /// <summary>Gets UTC date and time of modified.</summary>
+    public DateTime Modified { get; set; }
+
     /// <summary>Gets or sets logical entity (table) name.</summary>
-    public string TableName { get; set; }
+    public string Name { get; set; }
 
     /// <summary>Gets or sets the description of the table (entity).</summary>
     public string Description { get; set; }
@@ -447,9 +477,9 @@ public partial class XTableSchema : ITableSchema
     /// <summary>Gets or sets the view .NET format using column name as {%column%} of the table (entity).</summary>
     public string ViewFormat { get; set; }
 
-    /// <summary>Gets or sets text relation for the many to many table (entity).</summary>
-    /// <remarks>Format of many to many relation: four names for each relation.</remarks>
-    public string ManyToMany { get; set; }
+    ///// <summary>Gets or sets text relation for the many to many table (entity).</summary>
+    ///// <remarks>Format of many to many relation: four names for each relation.</remarks>
+    //public string ManyToMany { get; set; }
 
     /// <summary>
     /// Gets a collection of table column schema.
@@ -464,6 +494,21 @@ public partial class XTableSchema : ITableSchema
     /// <summary>Gets or sets the schema name of the column of the table.</summary>
     public string SchemaName { get; set; }
 
+    /// <summary>Gets or sets application identifier.</summary>
+    public _Id ApplicationId { get; set; }
+    /// <summary>Gets application of this script.</summary>
+    public IApplication Application
+    {
+        get
+        {
+            if (ApplicationId != _Id.Empty)
+            {
+                //Schema.Tables.Ge
+            }
+            return null;
+        }
+    }
+
     /// <summary>
     /// Gets a column schema by name.
     /// </summary>
@@ -473,11 +518,11 @@ public partial class XTableSchema : ITableSchema
     {
         foreach (var column in this.Columns)
         {
-            if (itemName.Equals(column.ColumnName))
+            if (itemName.Equals(column.Name))
             {
                 return column;
             }
-            if (itemName.Equals(column.ColumnName.ToLower()))
+            if (itemName.Equals(column.Name.ToLower()))
             {
                 return column;
             }
@@ -491,14 +536,14 @@ public partial class XTableSchema : ITableSchema
     /// <returns>A string that represents the current object.</returns>
     public override string ToString()
     {
-        return $"TABLE [{TableName}:{Columns.Count}]";
+        return $"TABLE [{Name}:{Columns.Count}]";
     }
 
     ///// <summary>
     ///// Werther is column name in the table or no.
     ///// </summary>
     ///// <param name="name">A name.</param>
-    ///// <returns><b>true</b> if column name, overwise <b>false</b>.</returns>
+    ///// <returns><b>true</b> if column name, over-wise <b>false</b>.</returns>
     //public bool IsColumnName(string name)
     //{
     //    return ((ObservableCollection<IColumnSchema>)Columns).C.
@@ -531,12 +576,12 @@ public partial class XTableSchema : ITableSchema
         // search primary column and primary attribute for the entity
         foreach (var column in Columns)
         {
-            if (formats.Contains(column.ColumnName))
+            if (formats.Contains(column.Name))
             {
                 primaryColumn = column;
                 break;
             }
-            if (formats.Contains(column.ColumnName.ToLower()))
+            if (formats.Contains(column.Name.ToLower()))
             {
                 primaryColumn = column;
                 break;
@@ -585,8 +630,15 @@ public partial class XColumnSchema : IColumnSchema
         Order = -1;
     }
 
+    /// <summary>Gets the object identifier.</summary>
+    public _Id Id { get; set; }
+    /// <summary>Gets UTC date and time of created.</summary>
+    public DateTime Created { get; set; }
+    /// <summary>Gets UTC date and time of modified.</summary>
+    public DateTime Modified { get; set; }
+
     /// <summary>Gets or sets the logical name of the column of the table.</summary>
-    public string ColumnName { get; set; }
+    public string Name { get; set; }
     /// <summary>Gets or sets display name of the column of the table.</summary>
     public string Title { get; set; }
     /// <summary>Gets or sets the description of the column of the table.</summary>
@@ -615,13 +667,29 @@ public partial class XColumnSchema : IColumnSchema
     /// <summary>Gets or sets logical entity (table) name.</summary>
     public string TableName { get; set; }
 
+    /// <summary>Gets or sets table identifier.</summary>
+    public _Id TableId { get; set; }
+    /// <summary>Gets table of this column.</summary>
+    public ITable Table
+    {
+        get
+        {
+            if (TableId != _Id.Empty)
+            {
+                //Schema.Tables.Ge
+            }
+            return null;
+        }
+    }
+
+
     /// <summary>
     /// Returns a string that represents the current object.
     /// </summary>
     /// <returns>A string that represents the current object.</returns>
     public override string ToString()
     {
-        return $"COLUMN [{ColumnName}:{DataType}]";
+        return $"COLUMN [{Name}:{DataType}]";
     }
 }
 
@@ -642,13 +710,20 @@ public partial class XIndexSchema : IIndexSchema
         Columns = new ObservableCollection<IColumnSchema>();
     }
 
+    /// <summary>Gets the object identifier.</summary>
+    public _Id Id { get; set; }
+    /// <summary>Gets UTC date and time of created.</summary>
+    public DateTime Created { get; set; }
+    /// <summary>Gets UTC date and time of modified.</summary>
+    public DateTime Modified { get; set; }
+
     /// <summary>Gets or sets the schema name of the column of the table.</summary>
     public string SchemaName { get; set; }
     /// <summary>Gets or sets logical entity (table) name.</summary>
     public string TableName { get; set; }
 
     /// <summary>Gets or sets the logical name of the index of the table.</summary>
-    public string IndexName { get; set; }
+    public string Name { get; set; }
     /// <summary>Gets or sets the description of the index of the table.</summary>
     public string Description { get; set; }
 
@@ -663,16 +738,98 @@ public partial class XIndexSchema : IIndexSchema
     /// <returns>A string that represents the current object.</returns>
     public override string ToString()
     {
-        var sb = new StringBuilder(IndexName);
+        var sb = new StringBuilder(Name);
         if (sb.Length > 0)
         {
             sb.Append('_').Append(TableName);
             foreach (var column in Columns)
             {
-                sb.Append('_').Append(column.ColumnName);
+                sb.Append('_').Append(column.Name);
             }
         }
         return $"INDEX [{sb}]";
+    }
+}
+
+#endregion
+
+// -------------------------------------------------------------------------
+#region ** script schema
+
+/// <summary>The table column schema.</summary>
+[Serializable]
+public partial class XScriptSchema : IScriptSchema
+{
+    /// <summary>
+    /// Default initialization.
+    /// </summary>
+    public XScriptSchema()
+    {
+    }
+
+    /// <summary>Gets the object identifier.</summary>
+    public _Id Id { get; set; }
+    /// <summary>Gets UTC date and time of created.</summary>
+    public DateTime Created { get; set; }
+    /// <summary>Gets UTC date and time of modified.</summary>
+    public DateTime Modified { get; set; }
+
+    /// <summary>Gets or sets the schema.</summary>
+    public ISchema Schema { get; set; }
+    /// <summary>Gets or sets logical entity (table) name.</summary>
+    public string TableName { get; set; }
+
+    /// <summary>Gets or sets the logical name of the index of the table.</summary>
+    public string Name { get; set; }
+    /// <summary>Gets or sets display name of the column of the table.</summary>
+    public string Title { get; set; }
+    /// <summary>Gets or sets the description of the index of the table.</summary>
+    public string Description { get; set; }
+
+    /// <summary>Gets or sets the flag of the active object.</summary>
+    public bool IsActive { get; set; }
+
+    /// <summary>Gets or sets application identifier.</summary>
+    public _Id ApplicationId { get; set; }
+    /// <summary>Gets application of this script.</summary>
+    public IApplication Application
+    {
+        get
+        {
+            if (ApplicationId != _Id.Empty)
+            {
+                //Schema.Tables.Ge
+            }
+            return null;
+        }
+    }
+
+    /// <summary>Gets or sets script code.</summary>
+    public string ScriptCode { get; set; }
+
+    /// <summary>Gets or sets role identifier.</summary>
+    public _Id RoleId { get; set; }
+    /// <summary>Gets role of this script.</summary>
+    public IRole Role
+    {
+        get
+        {
+            if (RoleId != _Id.Empty)
+            {
+                //Schema.Tables.Ge
+            }
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Returns a string that represents the current object.
+    /// </summary>
+    /// <returns>A string that represents the current object.</returns>
+    public override string ToString()
+    {
+        var sb = new StringBuilder(Name);
+        return $"SCRIPT [{sb}]";
     }
 }
 

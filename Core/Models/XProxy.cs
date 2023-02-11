@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -535,64 +536,59 @@ public static class XProxy
     public static object GetValue(string text)
     {
         // is option set?
-        XOptionSetValue optionSet;
-        if (XOptionSetValue.TryParse(text, out optionSet))
+        if (XOptionSetValue.TryParse(text, out XOptionSetValue optionSet))
         {
             return optionSet;
         }
 
         // is reference?
-        XEntityReference entityRef;
-        if (XEntityReference.TryParse(text, out entityRef))
+        if (XEntityReference.TryParse(text, out XEntityReference entityRef))
         {
             return entityRef;
         }
 
         // is integer?
-        int n;
-        if (int.TryParse(text, out n))
+        if (int.TryParse(text, out int n))
         {
-            if (text.StartsWith("0"))
+            if (text[0] == '0')
                 return text;
             return n;
         }
 
         // is long integer?
-        long l;
-        if (long.TryParse(text, out l))
+        if (long.TryParse(text, out long l))
         {
-            if (text.StartsWith("0"))
+            if (text[0] == '0')
                 return text;
             return l;
         }
 
         // is GUID?
-        Guid guid;
-        if (Guid.TryParse(text, out guid))
+        if (Guid.TryParse(text, out Guid guid))
         {
             return guid;
         }
 
         // is boolean?
-        bool b;
-        if (bool.TryParse(text, out b) && text.Equals(new XElement("n", b).Value))
+        if (bool.TryParse(text, out bool b) && text.Equals(new XElement("n", b).Value))
         {
             return b;
         }
 
         // set of format providers
-        var cultures = new List<IFormatProvider>();
-        cultures.Add(CultureInfo.CurrentUICulture);
-        cultures.Add(CultureInfo.CurrentCulture);
-        cultures.Add(CultureInfo.InstalledUICulture);
-        cultures.Add(CultureInfo.InvariantCulture);
+        var cultures = new List<IFormatProvider>
+        {
+            CultureInfo.CurrentUICulture,
+            CultureInfo.CurrentCulture,
+            CultureInfo.InstalledUICulture,
+            CultureInfo.InvariantCulture
+        };
 
         // is numeric?
-        double d;
         foreach (var culture in cultures)
         {
             if (!IsNumber(text)) break;
-            if (double.TryParse(text, NumberStyles.Float, culture, out d) && text.Equals(new XElement("n", d).Value))
+            if (double.TryParse(text, NumberStyles.Float, culture, out double d) && text.Equals(new XElement("n", d).Value))
                 return d;
             if (double.TryParse(text, NumberStyles.Any, culture, out d) && text.Equals(new XElement("n", d).Value))
                 return d;

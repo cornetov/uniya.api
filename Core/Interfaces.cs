@@ -30,14 +30,17 @@ public interface IConnetor
 /// </summary>
 public interface IDB
 {
-    /// <summary>Gets object identifier.</summary>
+    /// <summary>Gets the object identifier.</summary>
     [Key]
+    [Display(Name = "ID", Description = "ID of the object")]
     _Id Id { get; set; }
-    /// <summary>Gets UTC date and time of create.</summary>
+    /// <summary>Gets UTC date and time of created.</summary>
     [Required]
+    [Display(Name = "Created", Description = "UTC date and time of created")]
     DateTime Created { get; set; }
-    /// <summary>Gets UTC date and time of last change.</summary>
+    /// <summary>Gets UTC date and time of modified.</summary>
     [Required]
+    [Display(Name = "Modified", Description = "UTC date and time of modified")]
     DateTime Modified { get; set; }
 }
 
@@ -46,18 +49,23 @@ public interface ITitleDB : IDB
 {
     /// <summary>Gets or sets name.</summary>
     [Required]
+    [Display(Name = "Name", Description = "Unique name of the object")]
     string Name { get; set; }
     /// <summary>Gets or sets title.</summary>
+    [Display(Name = "Title", Description = "Title of the object")]
     string Title { get; set; }
     /// <summary>Gets or sets description.</summary>
+    [Display(Name = "Description", Description = "Description of the object")]
     string Description { get; set; }
 }
 
 /// <summary>Support active and timed object.</summary>
 public interface IActiveDB : IDB
 {
-    /// <summary>Gets or sets whether active or not.</summary>
+    /// <summary>Gets or sets the flag of the active object.</summary>
     [Required]
+    [Display(Name = "Active", Description = "Flag of the active object")]
+
     bool IsActive { get; set; }
 }
 
@@ -66,6 +74,7 @@ public interface IRunDB : IActiveDB
 {
     /// <summary>Gets or sets code class name for run.</summary>
     [Required]
+    [Display(Name = "Class name", Description = "Unique class name for run")]
     string ClassName { get; set; }
 }
 
@@ -73,14 +82,17 @@ public interface IRunDB : IActiveDB
 public interface INoteDB : IDB
 {
     /// <summary>Gets or sets note.</summary>
+    [Display(Name = "Note", Description = "Note for the object")]
     string Note { get; set; }
 
-    /// <summary>Gets user that created a record.</summary>
+    /// <summary>Gets user who created the object.</summary>
     [Required]
+    [Display(Name = "Creator ID", Description = "ID of the user who created the object")]
     [ForeignKey("User")]
     _Id CreatedUserId { get; set; }
-    /// <summary>Gets user that modified a record.</summary>
+    /// <summary>Gets user who modified the object.</summary>
     [Required]
+    [Display(Name = "Modifier ID", Description = "ID of the user who modified the object")]
     [ForeignKey("User")]
     _Id ModifiedUserId { get; set; }
 }
@@ -89,6 +101,23 @@ public interface INoteDB : IDB
 
 /*********************************************************************************************/
 #region ** local database
+
+/// <summary>The type of a connector.</summary>
+public enum XConnectorType
+{
+    /// <summary>Exist ODATA service.</summary>
+    OData,
+    /// <summary>Microsoft SQL Server.</summary>
+    MsSql,
+    /// <summary>SQLite server.</summary>
+    SQLite,
+    /// <summary>Microsoft SharePoint server.</summary>
+    SharePoint,
+    /// <summary>1C Bitrix 24 server.</summary>
+    Bitrix24,
+    /// <summary>MS Exchange post server.</summary>
+    MsExchange,
+}
 
 /// <summary>
 /// Support local database.
@@ -148,7 +177,7 @@ public interface IEntitySet
 public interface IReadonlyData
 {
     // -------------------------------------------------------------------------------
-#region ** select
+    #region ** select
 
     /// <summary>
     /// Read one entity using identifier with all columns.
@@ -165,10 +194,10 @@ public interface IReadonlyData
     /// <returns>The entity collection.</returns>
     Task<XEntityCollection> Select(XQuery query);
 
-#endregion
+    #endregion
 
     // -------------------------------------------------------------------------------
-#region ** schema
+    #region ** schema
 
     /// <summary>
     /// Gets schema of the data.
@@ -177,7 +206,7 @@ public interface IReadonlyData
     /// <returns>The schema of the data.</returns>
     Task<ISchema> GetSchema(params string[] tableNames);
 
-#endregion
+    #endregion
 }
 
 /// <summary>
@@ -186,7 +215,7 @@ public interface IReadonlyData
 public interface ICrudData : IReadonlyData
 {
     //-----------------------------------------------------------------------------
-#region ** create
+    #region ** create
 
     /// <summary>
     /// Create entity object in database.
@@ -195,10 +224,10 @@ public interface ICrudData : IReadonlyData
     /// <returns>Without information.</returns>
     Task Create(params XEntity[] entities);
 
-#endregion
+    #endregion
 
     // -------------------------------------------------------------------------------
-#region ** update
+    #region ** update
 
     /// <summary>
     /// Update entity object in database.
@@ -207,10 +236,10 @@ public interface ICrudData : IReadonlyData
     /// <returns>Without information.</returns>
     Task Update(params XEntity[] entities);
 
-#endregion
+    #endregion
 
     // -------------------------------------------------------------------------------
-#region ** delete
+    #region ** delete
 
     /// <summary>
     /// Delete entity object in database.
@@ -228,7 +257,7 @@ public interface ICrudData : IReadonlyData
     /// <returns>Without information.</returns>
     Task Delete(string entityName, string key, params object[] ids);
 
-#endregion
+    #endregion
 }
 
 /// <summary>
@@ -237,7 +266,7 @@ public interface ICrudData : IReadonlyData
 public interface ITransactedData : ICrudData
 {
     //-----------------------------------------------------------------------------
-#region ** transaction
+    #region ** transaction
 
     /// <summary>
     /// Apply transaction in database.
@@ -246,7 +275,7 @@ public interface ITransactedData : ICrudData
     /// <returns>Without information.</returns>
     Task Transaction(IEntitySet iset);
 
-#endregion
+    #endregion
 }
 
 /// <summary>
@@ -255,7 +284,7 @@ public interface ITransactedData : ICrudData
 public interface IDesignData : ICrudData
 {
     // -------------------------------------------------------------------------------
-#region ** design
+    #region ** design
 
     /// <summary>
     /// Sets table schema of the database.
@@ -264,7 +293,7 @@ public interface IDesignData : ICrudData
     /// <returns>The changed schema of the data.</returns>
     Task<ISchema> SetSchema(ITableSchema tableSchema);
 
-#endregion
+    #endregion
 }
 
 #endregion
@@ -332,10 +361,10 @@ public enum XDataType : byte
     /// <summary>A type representing a SQL Server time value.</summary>
     Time = 17,
     /// <summary>A fixed-length string of Unicode characters.</summary>
-    [Obsolete]
+    [Obsolete("StringFixedLength obsolete")]
     StringFixedLength = 22,
     /// <summary>A parsed representation of an XML document or fragment.</summary>
-    [Obsolete]
+    [Obsolete("XML obsolete")]
     Xml = 25,
     /// <summary>A parsed representation of an option set.</summary>
     OptionSet = 90,
@@ -348,7 +377,7 @@ public enum XDataType : byte
 }
 
 /// <summary>
-/// The update or delete type ar references.
+/// The type of a reference.
 /// </summary>
 public enum XReferenceType : byte
 {
@@ -364,101 +393,66 @@ public enum XReferenceType : byte
     SetDefault = 4,
 }
 
-/// <summary>
-/// The schema interface of the database.
-/// </summary>
-public interface ISchema
+/// <summary>Support class name with Run() method as active and timed object.</summary>
+public interface IApplication : IActiveDB, ITitleDB
 {
-    /// <summary>Gets or sets logical entity name.</summary>
-    string SchemaName { get; set; }
-    /// <summary>Gets or sets display name of the table.</summary>
-    string Title { get; set; }
-    /// <summary>Gets or sets the primary value of the entity.</summary>
-    string Description { get; set; }
+    /// <summary>Gets or sets version of this application.</summary>
+    [Required]
+    string Version { get; set; }
 
     /// <summary>Gets or sets root name of XML or JSON data.</summary>
+    [Required]
+    [Display(Name = "Root name", Description = "The root name of XML or JSON data")]
     string RootName { get; set; }
     /// <summary>Gets or sets item name of XML or JSON data.</summary>
+    [Required]
+    [Display(Name = "Root name", Description = "The root item of XML or JSON data")]
     string ItemName { get; set; }
     /// <summary>Gets or sets type name of XML or JSON data.</summary>
+    [Required]
+    [Display(Name = "Root name", Description = "The type name of XML or JSON data")]
     string TypeName { get; set; }
     /// <summary>Gets or sets result name of XML or JSON data.</summary>
+    [Required]
+    [Display(Name = "Root name", Description = "The result name of XML or JSON data")]
     string ResultName { get; set; }
     /// <summary>Gets or sets collection name of XML or JSON data.</summary>
+    [Required]
+    [Display(Name = "Root name", Description = "The collection name of XML or JSON data")]
     string CollectionName { get; set; }
-
-    /// <summary>Gets or sets the data type for primary and foreign keys of the tables.</summary>
-    XDataType KeyType { get; set; }
-    /// <summary>Gets or sets the created date and time of the schema.</summary>
-    DateTime CreatedTime { get; set; }
-
-    /// <summary>Gets a collection of table schemes.</summary>
-    IList<ITableSchema> Tables { get; }
-    /// <summary>Gets a collection of one to many relation schemes.</summary>
-    IList<IRelationSchema> Relations { get; }
-
-    /// <summary>Gets a table scheme by name.</summary>
-    /// <param name="name">The table name.</param>
-    /// <returns>The table scheme or <b>null</b>.</returns>
-    ITableSchema GetTableByName(string name);
 }
-
-/// <summary>
-/// The table schema interface of the database.
-/// </summary>
-public interface ITableSchema
+/// <summary>Support class name with Run() method as active and timed object.</summary>
+public interface ITable : ITitleDB
 {
-    /// <summary>Gets or sets logical entity (table) name with schema name, for example: "dbo.MyTable".</summary>
-    string TableName { get; set; }
-    /// <summary>Gets or sets the description of the table (entity).</summary>
-    string Description { get; set; }
+    /// <summary>Gets or sets application identifier.</summary>
+    [Required]
+    [ForeignKey("Application")]
+    _Id ApplicationId { get; set; }
 
-    /// <summary>Gets or sets display name of the table.</summary>
-    string Title { get; set; }
     /// <summary>Gets or sets collection display name of the table.</summary>
+    [Required]
+    [Display(Name = "Collection", Description = "The title of collection")]
     string CollectionTitle { get; set; }
 
     /// <summary>Gets or sets the primary key name of the table (entity).</summary>
+    [Required]
+    [Display(Name = "Primary key", Description = "The primary key name of this table")]
     string PrimaryKey { get; set; }
     /// <summary>Gets or sets the parent key name of the table (entity).</summary>
+    [Display(Name = "Parent key", Description = "The parent key name of this table")]
     string ParentKey { get; set; }
-    /// <summary>Gets or sets the view .NET format using column name as {%column%} of the table (entity).</summary>
+    /// <summary>Gets or sets the view format using column name as {%column%} of the table (entity).</summary>
+    [Display(Name = "View format", Description = "The format dor display a record of the table")]
     string ViewFormat { get; set; }
-
-    /// <summary>Gets or sets text relation for the many to many table (entity).</summary>
-    /// <remarks>Format of many to many relation: four names for each relation.</remarks>
-    string ManyToMany { get; set; }
-
-    /// <summary>
-    /// Gets a collection of table column schemes.
-    /// </summary>
-    IList<IColumnSchema> Columns { get; }
-
-    /// <summary>
-    /// Gets a collection of table index schemes.
-    /// </summary>
-    IList<IIndexSchema> Indexes { get; }
-
-    /// <summary>
-    /// Gets a column schema by name.
-    /// </summary>
-    /// <param name="itemName">The item (attribute) logical name.</param>
-    /// <returns>The column schema.</returns>
-    IColumnSchema GetColumnSchema(string itemName);
 }
 
-/// <summary>
-/// The column schema interface of the database.
-/// </summary>
-public interface IColumnSchema
+/// <summary>Support class name with Run() method as active and timed object.</summary>
+public interface IColumn : ITitleDB
 {
-    /// <summary>Gets or sets the logical name of the column of the table.</summary>
-    string ColumnName { get; set; }
-
-    /// <summary>Gets or sets display name of the column of the table.</summary>
-    string Title { get; set; }
-    /// <summary>Gets or sets the description of the column of the table.</summary>
-    string Description { get; set; }
+    /// <summary>Gets or sets table identifier.</summary>
+    [Required]
+    [ForeignKey("Table")]
+    _Id TableId { get; set; }
 
     /// <summary>Gets or sets foreign relation name (Requirement as ForeignKey) of the table.</summary>
     string ForeignTable { get; set; }
@@ -472,6 +466,65 @@ public interface IColumnSchema
     string Pattern { get; set; }
     /// <summary>Gets or sets visual length in characters, by default -1.</summary>
     int Length { get; set; }
+}
+
+public interface IScript : IActiveDB, ITitleDB
+{
+    /// <summary>Gets or sets application identifier.</summary>
+    [Required]
+    [ForeignKey("Application")]
+    _Id ApplicationId { get; set; }
+
+    /// <summary>Gets or sets script code.</summary>
+    [Required]
+    string ScriptCode { get; set; }
+
+    /// <summary>Gets or sets role identifier.</summary>
+    [Required]
+    [ForeignKey("Role")]
+    _Id RoleId { get; set; }
+}
+
+/// <summary>
+/// The schema interface of the database.
+/// </summary>
+public interface ISchema : IApplication
+{
+    /// <summary>Gets a collection of table schemes.</summary>
+    IList<ITableSchema> Tables { get; }
+    /// <summary>Gets a collection of one to many relation schemes.</summary>
+    IList<IRelationSchema> Relations { get; }
+    /// <summary>Gets a collection of index schemes.</summary>
+    IList<IScriptSchema> Scripts { get; }
+
+    /// <summary>Gets a table scheme by name.</summary>
+    /// <param name="name">The table name.</param>
+    /// <returns>The table scheme or <b>null</b>.</returns>
+    ITableSchema GetTableByName(string name);
+}
+
+/// <summary>
+/// The table schema interface of the database.
+/// </summary>
+public interface ITableSchema : ITable
+{
+    /// <summary>Gets a collection of table column schemes.</summary>
+    IList<IColumnSchema> Columns { get; }
+
+    /// <summary>Gets a collection of table index schemes.</summary>
+    IList<IIndexSchema> Indexes { get; }
+
+    /// <summary>Gets a column schema by name.</summary>
+    /// <param name="itemName">The item (attribute) logical name.</param>
+    /// <returns>The column schema.</returns>
+    IColumnSchema GetColumnSchema(string itemName);
+}
+
+/// <summary>
+/// The column schema interface of the database.
+/// </summary>
+public interface IColumnSchema : IColumn
+{
     /// <summary>Gets or sets requirement options of the column of the table.</summary>
     XRequirementOptions Requirement { get; set; }
 
@@ -488,7 +541,7 @@ public interface IColumnSchema
 public interface IRelationSchema
 {
     /// <summary>Gets or sets logical entity (table) name.</summary>
-    string RelationName { get; set; }
+    string Name { get; set; }
 
     /// <summary>The referenced table entity record is changed.</summary>
     XReferenceType Update { get; set; }
@@ -511,7 +564,7 @@ public interface IRelationSchema
 public interface IIndexSchema
 {
     /// <summary>Gets or sets the logical name of the index of the table.</summary>
-    string IndexName { get; set; }
+    string Name { get; set; }
     /// <summary>Gets or sets the description of the index of the table.</summary>
     string Description { get; set; }
 
@@ -522,6 +575,15 @@ public interface IIndexSchema
     /// Gets a collection of table column for this index.
     /// </summary>
     IList<IColumnSchema> Columns { get; }
+}
+
+/// <summary>
+/// The script schema interface of the database.
+/// </summary>
+public interface IScriptSchema : IScript
+{
+    /// <summary>Gets or sets schema.</summary>
+    ISchema Schema { get; set; }
 }
 
 /// <summary>

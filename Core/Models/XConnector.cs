@@ -85,7 +85,7 @@ public abstract class XConnector : IConnetor
                     if (browsable != null && !browsable.Browsable) continue;
 
                     // create column schema
-                    var column = new XColumnSchema() { ColumnName = mi.Name };
+                    var column = new XColumnSchema() { Name = mi.Name };
                     column.DataType = XSchema.GetDataType(pi.PropertyType);
 
                     // get display name of the column
@@ -315,7 +315,7 @@ public abstract class XConnector : IConnetor
                     }
 
                     // add column
-                    tableColumns.Add(column.ColumnName, column);
+                    tableColumns.Add(column.Name, column);
                 }
             }
         }
@@ -332,18 +332,18 @@ public abstract class XConnector : IConnetor
             // initialization
             var columns = tables[type];
             var indexColumns = indexes[type];
-            var table = new XTableSchema() { TableName = tableName };
+            var table = new XTableSchema() { Name = tableName };
 
             // primary key
             var primaryKey = new XColumnSchema()
             {
-                ColumnName = "Id",
+                Name = "Id",
                 Title = "Identifier",
                 DataType = XDataType.Int64,
                 Requirement = XRequirementOptions.PrimaryKey,
             };
             table.Columns.Add(primaryKey);
-            table.PrimaryKey = primaryKey.ColumnName;
+            table.PrimaryKey = primaryKey.Name;
 
             // add table with columns
             foreach (var key in columns.Keys)
@@ -359,14 +359,14 @@ public abstract class XConnector : IConnetor
                     var index = new XIndexSchema();
                     index.TableName = tableName;
                     var indexName = key;
-                    index.SchemaName = schema.SchemaName;
+                    index.SchemaName = schema.Name;
                     foreach (var column in indexColumns[key])
                     {
                         if (string.IsNullOrEmpty(key))
-                            indexName += column.ColumnName;
+                            indexName += column.Name;
                         index.Columns.Add(column);
                     }
-                    index.IndexName = indexName;
+                    index.Name = indexName;
                     table.Indexes.Add(index);
                 }
             }
@@ -408,7 +408,7 @@ public abstract class SqlConnector : XConnector
     /// <returns></returns>
     protected string GetInsert(ITableSchema schema)
     {
-        var sb = new StringBuilder($"INSERT INTO {schema.TableName} (");
+        var sb = new StringBuilder($"INSERT INTO {schema.Name} (");
         var values = new StringBuilder();
         foreach (var column in schema.Columns)
         {
@@ -420,9 +420,9 @@ public abstract class SqlConnector : XConnector
             values.Append(ParameterChar);
             if (ParameterWithName)
             {
-                values.Append(column.ColumnName);
+                values.Append(column.Name);
             }
-            sb.Append(column.ColumnName);
+            sb.Append(column.Name);
         }
         sb.Append(')').Append(" VALUES (").Append(values).Append(')');
         return sb.ToString();
@@ -549,7 +549,7 @@ public abstract class SqlConnector : XConnector
     /// <returns></returns>
     protected string GetDelete(ITableSchema schema)
     {
-        return GetDelete(schema.TableName, schema.PrimaryKey);
+        return GetDelete(schema.Name, schema.PrimaryKey);
     }
     /// <summary>
     /// 
@@ -581,7 +581,7 @@ public abstract class SqlConnector : XConnector
     /// <param name="reader"></param>
     /// <param name="testing"></param>
     /// <returns></returns>
-    protected XEntity ReadEntity(ITableSchema schema, IDataReader reader, bool testing = true)
+    protected static XEntity ReadEntity(ITableSchema schema, IDataReader reader, bool testing = true)
     {
         // initialization
         var entity = new XEntity(schema);
@@ -592,7 +592,7 @@ public abstract class SqlConnector : XConnector
         {
             for (int i = 0; i < schema.Columns.Count; i++)
             {
-                var columnName = schema.Columns[i].ColumnName;
+                var columnName = schema.Columns[i].Name;
                 if (columns.ContainsKey(columnName))
                 {
                     throw new XSchemaException($"Double columns with name: {columnName}", columnName);
@@ -624,7 +624,7 @@ public abstract class SqlConnector : XConnector
     /// <param name="entityName"></param>
     /// <param name="reader"></param>
     /// <returns></returns>
-    protected XEntity ReadEntity(string entityName, IDataReader reader)
+    protected static XEntity ReadEntity(string entityName, IDataReader reader)
     {
         var entity = new XEntity(entityName);
         for (int i = 0; i < reader.FieldCount; i++)

@@ -222,7 +222,7 @@ public class XEntity : DynamicObject
                 // bad done
                 return false;
             }
-            itemName = column.ColumnName;
+            itemName = column.Name;
             if (value != null && !XSchema.IsEqualTypes(column.DataType, value))
             {
                 // bad done
@@ -295,7 +295,7 @@ public class XEntity : DynamicObject
             {
                 foreach (var column in table.Columns)
                 {
-                    if (primaryKey.Equals(column.ColumnName))
+                    if (primaryKey.Equals(column.Name))
                     {
                         switch (column.DataType)
                         {
@@ -344,7 +344,7 @@ public class XEntity : DynamicObject
     /// <summary>Gets logical name of the entity.</summary>
     public string EntityName
     {
-        get { return (Schema != null) ? Schema.TableName : _entityName; }
+        get { return (Schema != null) ? Schema.Name : _entityName; }
         protected set { _entityName = value; }
     }
 
@@ -434,17 +434,29 @@ public class XEntity : DynamicObject
                 }
 
                 if (type == typeof(bool))
+                {
                     XProxy.SetValue(obj, item.Key, Convert.ToBoolean(item.Value));
+                }
                 else if (type == typeof(decimal))
+                {
                     XProxy.SetValue(obj, item.Key, Convert.ToDecimal(item.Value));
+                }
                 else if (type == typeof(float))
+                {
                     XProxy.SetValue(obj, item.Key, Convert.ToSingle(item.Value));
+                }
                 else if (type == typeof(double))
+                {
                     XProxy.SetValue(obj, item.Key, Convert.ToDouble(item.Value));
+                }
                 else if (type == typeof(long))
+                {
                     XProxy.SetValue(obj, item.Key, Convert.ToInt64(item.Value));
+                }
                 else
+                {
                     XProxy.SetValue(obj, item.Key, XProxy.GetValue(item.Value.ToString()));
+                }
             }
         }
         return obj;
@@ -467,9 +479,11 @@ public class XEntity : DynamicObject
         // items
         foreach (var column in schema.Columns)
         {
-            var value = XProxy.GetValue(obj, column.ColumnName);
+            var value = XProxy.GetValue(obj, column.Name);
             if (value != null)
-                entity[column.ColumnName] = value;
+            {
+                entity[column.Name] = value;
+            }
         }
 
         // done
@@ -498,7 +512,7 @@ public class XEntity : DynamicObject
         {
             foreach (var column in schema.Columns)
             {
-                columns.Add(column.ColumnName, column);
+                columns.Add(column.Name, column);
             }
         }
 
@@ -517,14 +531,14 @@ public class XEntity : DynamicObject
                     // sanity column name
                     if (!columns.ContainsKey(name))
                     {
-                        Console.WriteLine($"In table schema {schema.TableName} absent {name}!");
+                        Console.WriteLine($"In table schema {schema.Name} absent {name}!");
                         continue;
                     }
 
                     // sanity column type
                     if (dataType != columns[name].DataType)
                     {
-                        Console.WriteLine($"In table schema {schema.TableName} mismatch types in {name}!");
+                        Console.WriteLine($"In table schema {schema.Name} mismatch types in {name}!");
                         continue;
                     }
                 }
@@ -625,7 +639,7 @@ public class XEntity : DynamicObject
     {
         foreach (var column in schema.Columns)
         {
-            var value = this[column.ColumnName];
+            var value = this[column.Name];
             if ((column.Requirement & XRequirementOptions.Required) != 0 && value == null)
             {
                 // bad done
@@ -636,35 +650,35 @@ public class XEntity : DynamicObject
                 switch (column.DataType)
                 {
                     case XDataType.Binary:
-                        this[column.ColumnName] = GetItemValue<byte[]>(column.ColumnName);
+                        this[column.Name] = GetItemValue<byte[]>(column.Name);
                         break;
                     case XDataType.Boolean:
-                        this[column.ColumnName] = GetItemValue<bool>(column.ColumnName);
+                        this[column.Name] = GetItemValue<bool>(column.Name);
                         break;
                     case XDataType.Byte:
-                        this[column.ColumnName] = GetItemValue<byte>(column.ColumnName);
+                        this[column.Name] = GetItemValue<byte>(column.Name);
                         break;
                     case XDataType.Currency:
                     case XDataType.Double:
-                        this[column.ColumnName] = GetItemValue<double>(column.ColumnName);
+                        this[column.Name] = GetItemValue<double>(column.Name);
                         break;
                     case XDataType.Decimal:
-                        this[column.ColumnName] = GetItemValue<decimal>(column.ColumnName);
+                        this[column.Name] = GetItemValue<decimal>(column.Name);
                         break;
                     case XDataType.Guid:
-                        this[column.ColumnName] = GetItemValue<Guid>(column.ColumnName);
+                        this[column.Name] = GetItemValue<Guid>(column.Name);
                         break;
                     case XDataType.Int16:
                     case XDataType.Int32:
                     case XDataType.Int64:
-                        this[column.ColumnName] = GetItemValue<long>(column.ColumnName);
+                        this[column.Name] = GetItemValue<long>(column.Name);
                         break;
                     case XDataType.Date:
                     case XDataType.DateTime:
-                        this[column.ColumnName] = GetItemValue<DateTime>(column.ColumnName);
+                        this[column.Name] = GetItemValue<DateTime>(column.Name);
                         break;
                     case XDataType.String:
-                        this[column.ColumnName] = GetItemText(column.ColumnName);
+                        this[column.Name] = GetItemText(column.Name);
                         break;
                 }
             }
@@ -789,14 +803,14 @@ public class XEntity : DynamicObject
     }
     internal static void SetTable(string entityName, XTableSchema table)
     {
-        Debug.Assert(entityName.Equals(table.TableName) || entityName.Equals(table.TableName.ToLower()));
+        Debug.Assert(entityName.Equals(table.Name) || entityName.Equals(table.Name.ToLower()));
         lock (_tableCache)
         {
             XTableSchema existTable;
             if (_tableCache.TryGetValue(entityName, out existTable))
             {
                 // replace
-                Debug.Assert(existTable.TableName.Equals(table.TableName));
+                Debug.Assert(existTable.Name.Equals(table.Name));
                 Debug.Assert(existTable.PrimaryKey == table.PrimaryKey);
                 _tableCache.SetItem(entityName, table);
             }
@@ -835,7 +849,7 @@ public class XEntity : DynamicObject
                     {
                         foreach (var column in table.Columns)
                         {
-                            if (key.Equals(column.ColumnName.ToLower()))
+                            if (key.Equals(column.Name.ToLower()))
                             {
                                 switch (column.DataType)
                                 {
@@ -847,7 +861,7 @@ public class XEntity : DynamicObject
                                         Debug.Assert(column.DataType == XDataType.String, "strange primary key!");
                                         break;
                                 }
-                                table.PrimaryKey = column.ColumnName;
+                                table.PrimaryKey = column.Name;
                                 return table.PrimaryKey;
                             }
                         }
@@ -929,7 +943,7 @@ public class XEntity : DynamicObject
                         };
                         foreach (var key in keys)
                         {
-                            if (key.ToLower().Equals(column.ColumnName.ToLower()))
+                            if (key.ToLower().Equals(column.Name.ToLower()))
                             {
                                 switch (column.DataType)
                                 {
@@ -941,7 +955,7 @@ public class XEntity : DynamicObject
                                         Debug.Assert(column.DataType == XDataType.String, "strange parent key!");
                                         break;
                                 }
-                                table.ParentKey = column.ColumnName;
+                                table.ParentKey = column.Name;
                                 return table.ParentKey;
                             }
                         }

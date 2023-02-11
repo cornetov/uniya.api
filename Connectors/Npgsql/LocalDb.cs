@@ -1,32 +1,5 @@
-﻿/*
- * Recent versions of SQLite allow you to select against PRAGMA results now, which makes this easy:
- * 
- *     SELECT 
- *       m.name as table_name, 
- *       p.name as column_name
- *     FROM 
- *       sqlite_master AS m
- *     JOIN 
- *       pragma_table_info(m.name) AS p
- *     ORDER BY 
- *       m.name, 
- *       p.cid
- *     where p.cid holds the column order of the CREATE TABLE statement, zero-indexed.
- * 
- *     David Garoutte answered this here, but this SQL should execute faster, and columns are ordered by the schema, not alphabetically.
- * 
- *     Note that table_info also contains
- * 
- *     type (the datatype, like integer or text),
- *     notnull (1 if the column has a NOT NULL constraint)
- *     dflt_value (NULL if no default value)
- *     pk (1 if the column is the table's primary key, else 0)
- *     RTFM: https://www.sqlite.org/pragma.html#pragma_table_info
- */
-
-using System;
+﻿using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -36,32 +9,28 @@ using System.Globalization;
 using System.Reflection;
 using System.Diagnostics;
 
-using Microsoft.Data.Sqlite;
+using Npgsql;
 
 using Uniya.Core;
 
-namespace Uniya.Connectors.Sqlite;
+namespace Uniya.Connectors.Npgsql;
 
-/// <summary>
-/// Sqlite local database.
-/// </summary>
-/// <remarks>
-/// DataTypes https://www.tutorialspoint.com/sqlite/sqlite_data_types.htm
-/// </remarks>
-public class SqliteLocal : ILocalDb
+/// <summary>Postgre SQL local database.</summary>
+/// <remarks>https://zetcode.com/csharp/postgresql/</remarks>
+internal class NpgsqlLocal : ILocalDb
 {
     // -------------------------------------------------------------------------
     #region ** fields & constructor
 
     // ** fields
-    private SqliteConnector _connector;
+    private NpgsqlConnector _connector;
     private string _outputFolder;
     private string _name;
 
     /// <summary>
-    /// Create Sqlite local database.
+    /// Create Microsoft SQL local database.
     /// </summary>
-    public SqliteLocal()
+    public NpgsqlLocal()
     {
         _outputFolder = SqlConnector.DataFolder;
     }
@@ -80,18 +49,15 @@ public class SqliteLocal : ILocalDb
             if (!Directory.Exists(_outputFolder)) return false;
 
             // names
-            var mdfFilename = Name + ".sqlite";
+            var mdfFilename = Name + ".mdf";
             var dbFileName = Path.Combine(_outputFolder, mdfFilename);
 
             // database file?
             if (!File.Exists(dbFileName)) return false;
 
             // create connector
-            //string connectionString = String.Format($@"Data Source={dbFileName};");
-            var connectionStringBuilder = new SqliteConnectionStringBuilder();
-            connectionStringBuilder.DataSource = dbFileName;
-            var connectionString = connectionStringBuilder.ConnectionString;
-            _connector = new SqliteConnector(connectionString);
+            var connectionString = $@"Data Source=(LocalDB)\mssqllocaldb;AttachDBFileName={dbFileName};Initial Catalog={Name};Integrated Security=True;";
+            _connector = new NpgsqlConnector(connectionString);
 
             // done
             return true;
@@ -112,12 +78,17 @@ public class SqliteLocal : ILocalDb
     /// <summary>
     /// Create new database file using database name.
     /// </summary>
-    /// <param name="deleteIfExists">Whether delete exist database or no.</param>
+    /// <param name="deleteIfExists">Whether delete exist databse or no.</param>
     /// <returns><b>true</b> if created, otherwise <b>false</b>.</returns>
     public async Task<bool> Create(bool deleteIfExists = false)
     {
         // initialization
-        var dbFileName = Path.Combine(_outputFolder, $"{Name}.sqlite");
+        var dbFileName = Path.Combine(_outputFolder, $"{Name}.mdf");
+        var logFileName = Path.Combine(_outputFolder, $"{Name}_log.ldf");
+
+        //var mdfFilename = Name + ".mdf";
+        //var dbFileName = Path.Combine(_outputFolder, mdfFilename);
+        //var logFileName = Path.Combine(_outputFolder, String.Format("{0}_log.ldf", Name));
 
         // create data directory if it doesn't already exist.
         if (!Directory.Exists(_outputFolder))
@@ -129,13 +100,14 @@ public class SqliteLocal : ILocalDb
         if (File.Exists(dbFileName) && deleteIfExists)
         {
             // to delete old data, remove it here and create a new database
+            if (File.Exists(logFileName)) File.Delete(logFileName);
             File.Delete(dbFileName);
-            await CreateDatabaseAsync(dbFileName);
+            await CreateDatabaseAsync(Name, dbFileName);
         }
         else if (!File.Exists(dbFileName))
         {
             // if the database does not already exist, create it.
-            await CreateDatabaseAsync(dbFileName);
+            await CreateDatabaseAsync(Name, dbFileName);
         }
 
         // done
@@ -151,16 +123,16 @@ public class SqliteLocal : ILocalDb
         {
             try
             {
+                // detach
+                await DetachDatabaseAsync(ConnectionString, Name);
+
                 // names
-                var dbFileName = Path.Combine(_outputFolder, $"{Name}.sqlite");
-                //var logFileName = Path.Combine(_outputFolder, $"{Name}_log.ldf");
+                var dbFileName = Path.Combine(_outputFolder, $"{Name}.mdf");
+                var logFileName = Path.Combine(_outputFolder, $"{Name}_log.ldf");
 
                 // delete
-                var fi = new FileInfo(dbFileName);
-                if (fi.Exists)
-                {
-                    await fi.DeleteAsync();
-                }
+                if (File.Exists(logFileName)) File.Delete(logFileName);
+                File.Delete(dbFileName);
 
                 // done
                 return true;
@@ -183,7 +155,7 @@ public class SqliteLocal : ILocalDb
         var regex = new Regex(Environment.NewLine + "GO");
         var commands = regex.Split(script);
 
-        using (var connection = new SqliteConnection(ConnectionString))
+        using (var connection = new NpgsqlConnection(ConnectionString))
         {
             await connection.OpenAsync();
             for (int i = 0; i < commands.Length; i++)
@@ -191,7 +163,7 @@ public class SqliteLocal : ILocalDb
                 var sql = commands[i].Trim();
                 if (!string.IsNullOrWhiteSpace(sql))
                 {
-                    using (var command = new SqliteCommand(sql, connection))
+                    using (var command = new NpgsqlCommand(sql, connection))
                     {
                         try
                         {
@@ -217,105 +189,7 @@ public class SqliteLocal : ILocalDb
     /// <returns>The SQL initialization script.</returns>
     public string GetSqlScript(ISchema schema)
     {
-        // initialization
-        var sb = new StringBuilder();
-
-        // tables
-        foreach (var table in schema.Tables)
-        {
-            // script split
-            if (sb.Length > 0)
-            {
-                sb.AppendLine().Append("GO").AppendLine();
-            }
-
-            // create table
-            sb.Append($"CREATE TABLE [{table.Name}] (").AppendLine();
-
-            // primary key and unique indexes
-            var key = table.PrimaryKey;
-            sb.Append($"[{key}] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE");
-
-            // columns
-            foreach (var column in table.Columns)
-            {
-                //if ((column.Requirement & XRequirementOptions.PrimaryKey) != 0)
-                if (column.Requirement == XRequirementOptions.PrimaryKey)
-                {
-                    continue;
-                }
-                sb.Append(',').AppendLine().Append('[').Append(column.Name).Append(']');
-                var dataText = GetDataText(column.DataType);
-                sb.Append(' ').Append(dataText);
-                if ((column.Requirement & XRequirementOptions.NotNull) != 0)
-                {
-                    sb.Append(' ').Append("NOT NULL");
-                }
-                if ((column.Requirement & XRequirementOptions.UniqueKey) != 0)
-                {
-                    sb.Append(' ').Append("UNIQUE");
-                }
-                if ((column.Requirement & XRequirementOptions.Required) != 0)
-                {
-                    switch (dataText)
-                    {
-                        case "TEXT":
-                            sb.Append(' ').Append($"CHECK ({column.Name} <> '')");
-                            break;
-                        case "INTEGER":
-                        case "REAL":
-                            sb.Append(' ').Append($"CHECK ({column.Name} <> 0)");
-                            break;
-                    }
-                }
-            }
-            sb.AppendLine().Append(')');
-
-            // unique indexes
-            foreach (var index in table.Indexes)
-            {
-                sb.Append("GO").AppendLine();
-                var indexName = $"{index.Name}_{table.Name}";
-                var indexOn = new StringBuilder();
-                foreach (var column in index.Columns)
-                {
-                    if (indexOn.Length > 0) indexOn.Append(", ");
-                    indexOn.Append('[').Append(column.Name).Append(']');
-                }
-                sb.Append($"CREATE UNIQUE INDEX [{indexName}]").AppendLine();
-                sb.Append($"ON [{table.Name}] ({indexOn})").AppendLine();
-            }
-        }
-
-        // done
-        return sb.ToString();
-    }
-
-    static string GetDataText(XDataType type)
-    {
-        switch (type)
-        {
-            case XDataType.Binary:
-                return "BLOB";
-            case XDataType.Boolean:
-                return "BOOLEAN";
-            case XDataType.Byte:
-            case XDataType.Int16:
-            case XDataType.Int32:
-            case XDataType.Int64:
-                return "INTEGER";
-            case XDataType.DateTime:
-                return "DATETIME";
-            case XDataType.Date:
-                return "DATE";
-            case XDataType.Time:
-                return "TIME";
-            case XDataType.Decimal:
-            case XDataType.Double:
-            case XDataType.Currency:
-                return "REAL";
-        }
-        return "TEXT";
+        return string.Empty;
     }
 
     #endregion
@@ -338,7 +212,7 @@ public class SqliteLocal : ILocalDb
     {
         // initialization
         var outputFolder = SqlConnector.DataFolder;
-        var mdfFilename = dbName + ".sqlite";
+        var mdfFilename = dbName + ".mdf";
         var dbFileName = Path.Combine(outputFolder, mdfFilename);
 
         // done
@@ -348,7 +222,7 @@ public class SqliteLocal : ILocalDb
     {
         // initialization
         var outputFolder = SqlConnector.DataFolder;
-        var mdfFilename = dbName + ".sqlite";
+        var mdfFilename = dbName + ".mdf";
         var dbFileName = Path.Combine(outputFolder, mdfFilename);
 
         // exist?
@@ -362,13 +236,13 @@ public class SqliteLocal : ILocalDb
         return false;
     }
 
-    public static async Task CreateDatabaseAsync(string dbName, bool deleteIfExists = false)
+    public static async Task<bool> CreateDatabaseAsync(string dbName, bool deleteIfExists = false)
     {
         // initialization
         var outputFolder = SqlConnector.DataFolder;
-        var mdfFilename = dbName + ".sqlite";
+        var mdfFilename = dbName + ".mdf";
         var dbFileName = Path.Combine(outputFolder, mdfFilename);
-        //var logFileName = Path.Combine(outputFolder, String.Format("{0}_log.ldf", dbName));
+        var logFileName = Path.Combine(outputFolder, String.Format("{0}_log.ldf", dbName));
 
         // create data directory if it doesn't already exist.
         if (!Directory.Exists(outputFolder))
@@ -380,46 +254,155 @@ public class SqliteLocal : ILocalDb
         if (File.Exists(dbFileName) && deleteIfExists)
         {
             // to delete old data, remove it here and create a new database
-            //if (File.Exists(logFileName)) File.Delete(logFileName);
+            if (File.Exists(logFileName)) File.Delete(logFileName);
             File.Delete(dbFileName);
-            await CreateDatabaseAsync(dbFileName);
+            return await CreateDatabaseAsync(dbName, dbFileName);
         }
         else if (!File.Exists(dbFileName))
         {
             // if the database does not already exist, create it.
-            await CreateDatabaseAsync(dbFileName);
+            return await CreateDatabaseAsync(dbName, dbFileName);
+        }
+
+        // done
+        return false;
+    }
+
+    public static NpgsqlConnection GetDatabase(string dbName, bool deleteIfExists = false)
+    {
+        bool exist;
+        return GetDatabase(dbName, deleteIfExists, out exist);
+    }
+    public static NpgsqlConnection GetDatabase(string dbName, bool deleteIfExists, out bool exist)
+    {
+        try
+        {
+            exist = false;
+            string outputFolder = SqlConnector.DataFolder;
+            string mdfFilename = dbName + ".mdf";
+            string dbFileName = Path.Combine(outputFolder, mdfFilename);
+            string logFileName = Path.Combine(outputFolder, String.Format("{0}_log.ldf", dbName));
+
+            // create data directory if it doesn't already exist.
+            if (!Directory.Exists(outputFolder))
+            {
+                Directory.CreateDirectory(outputFolder);
+            }
+
+            // is exists?
+            if (File.Exists(dbFileName) && deleteIfExists)
+            {
+                // to delete old data, remove it here and create a new database
+                if (File.Exists(logFileName)) File.Delete(logFileName);
+                File.Delete(dbFileName);
+                CreateDatabase(dbName, dbFileName);
+            }
+            else if (!File.Exists(dbFileName))
+            {
+                // if the database does not already exist, create it.
+                CreateDatabase(dbName, dbFileName);
+            }
+            else
+            {
+                exist = true;
+            }
+
+            // open database
+            string connectionString = String.Format(@"Data Source=(LocalDB)\mssqllocaldb;AttachDBFileName={1};Initial Catalog={0};Integrated Security=True;", dbName, dbFileName);
+            NpgsqlConnection connection = new(connectionString);
+            //connection.Open();
+
+            // done
+            return connection;
+        }
+        catch
+        {
+            throw;
         }
     }
 
-    public static async Task CreateDatabaseAsync(string dbFileName)
+    public static bool CreateDatabase(string dbName, string dbFileName)
     {
-        var connectionStringBuilder = new SqliteConnectionStringBuilder();
-        connectionStringBuilder.DataSource = dbFileName;
-        var connectionString = connectionStringBuilder.ConnectionString;
-
-        //string connectionString = String.Format($@"Data Source={dbFileName};New=True;");
-
-        //SqliteConnection.ChangeDatabase(("MyDatabase.sqlite");
-        using (var connection = new SqliteConnection(connectionString))
+        try
         {
-            //connection.
+            string connectionString = String.Format(@"Data Source=(LocalDB)\mssqllocaldb;Initial Catalog=master;Integrated Security=True");
+            using (var connection = new NpgsqlConnection(connectionString))
+            {
+                connection.Open();
+                NpgsqlCommand cmd = connection.CreateCommand();
 
-            //connection.Open();
+                DetachDatabase(dbName);
+
+                cmd.CommandText = $"CREATE DATABASE {dbName} ON (NAME = N'{dbName}', FILENAME = '{dbFileName}')";
+                cmd.ExecuteNonQuery();
+            }
+
+            // done
+            return File.Exists(dbFileName);
+        }
+        catch
+        {
+            throw;
+        }
+    }
+    public static async Task<bool> CreateDatabaseAsync(string dbName, string dbFileName)
+    {
+        string connectionString = String.Format(@"Data Source=(LocalDB)\mssqllocaldb;Initial Catalog=master;Integrated Security=True");
+        using (var connection = new NpgsqlConnection(connectionString))
+        {
             await connection.OpenAsync();
-            //var result = connection.Query<int>("SELECT @number;", new { number = 789 });
-            SqliteCommand cmd = connection.CreateCommand();
-            cmd.CommandText = @"SELECT @number;";
-            cmd.Parameters.AddWithValue("number", 586);
-            var result = await cmd.ExecuteScalarAsync();
-            Debug.Assert(Convert.ToInt32(result) == 586);
-#if DEBUGx
-            SqliteCommand cmd = connection.CreateCommand();
-            cmd.CommandText = @"CREATE TABLE [dbTableName]([id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [note] NVARCHAR(256))";
-            await cmd.ExecuteNonQueryAsync();
+            NpgsqlCommand cmd = connection.CreateCommand();
 
-            cmd.CommandText = @"DELETE TABLE [dbTableName]";
+
+            DetachDatabase(dbName);
+
+            cmd.CommandText = $"CREATE DATABASE {dbName} ON (NAME = N'{dbName}', FILENAME = '{dbFileName}')";
             await cmd.ExecuteNonQueryAsync();
-#endif
+        }
+
+        // done
+        return File.Exists(dbFileName);
+    }
+    public static async Task<bool> DetachDatabaseAsync(string connectionString, string dbName)
+    {
+        try
+        {
+            using (var connection = new NpgsqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                NpgsqlCommand cmd = connection.CreateCommand();
+                cmd.CommandText = String.Format("exec sp_detach_db '{0}'", dbName);
+                await cmd.ExecuteNonQueryAsync();
+
+                return true;
+            }
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+
+    public static bool DetachDatabase(string dbName)
+    {
+        try
+        {
+            string connectionString = String.Format(@"Data Source=(LocalDB)\mssqllocaldb;Initial Catalog=master;Integrated Security=True");
+            using (var connection = new NpgsqlConnection(connectionString))
+            {
+                connection.Open();
+                NpgsqlCommand cmd = connection.CreateCommand();
+                cmd.CommandText = String.Format("exec sp_detach_db '{0}'", dbName);
+                cmd.ExecuteNonQuery();
+
+                return true;
+            }
+        }
+        catch
+        {
+            return false;
         }
     }
 
@@ -429,12 +412,11 @@ public class SqliteLocal : ILocalDb
         var collection = new XEntityCollection();
 
         // read selected
-        using (var connection = new SqliteConnection(connectionString))
+        using (var connection = new NpgsqlConnection(connectionString))
         {
             connection.Open();
-            //connection.BeginTransaction(IsolationLevel.)
             var cmd = connection.CreateCommand();
-            cmd.CommandText = $"SELECT * FROM [dbo].[{entityName}]";
+            cmd.CommandText = $"SELECT * FROM [{entityName}]";
             var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -457,11 +439,11 @@ public class SqliteLocal : ILocalDb
         var collection = new XEntityCollection();
 
         // read selected
-        using (var connection = new SqliteConnection(connectionString))
+        using (var connection = new NpgsqlConnection(connectionString))
         {
             await connection.OpenAsync();
             var cmd = connection.CreateCommand();
-            cmd.CommandText = $"SELECT * FROM [dbo].[{entityName}]";
+            cmd.CommandText = $"SELECT * FROM [{entityName}]";
             var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -480,12 +462,12 @@ public class SqliteLocal : ILocalDb
 
     public static async Task RunScriptAsync(string connectionString, string script)
     {
-        // sainty
+        // sanity
 
         var regex = new Regex(@"\r\nGO");
         var commands = regex.Split(script);
 
-        using (var connection = new SqliteConnection(connectionString))
+        using (var connection = new NpgsqlConnection(connectionString))
         {
             await connection.OpenAsync();
             for (int i = 0; i < commands.Length; i++)
@@ -493,7 +475,7 @@ public class SqliteLocal : ILocalDb
                 var sql = commands[i].Trim();
                 if (!string.IsNullOrWhiteSpace(sql))
                 {
-                    using (var command = new SqliteCommand(sql, connection))
+                    using (var command = new NpgsqlCommand(sql, connection))
                     {
                         try
                         {
@@ -509,7 +491,7 @@ public class SqliteLocal : ILocalDb
         }
     }
 
-    public static void RunScript(SqliteConnection connection, string script)
+    public static void RunScript(NpgsqlConnection connection, string script)
     {
         var regex = new Regex(@"\r\nGO");
         var commands = regex.Split(script);
@@ -519,7 +501,7 @@ public class SqliteLocal : ILocalDb
             var sql = commands[i].Trim();
             if (!string.IsNullOrWhiteSpace(sql))
             {
-                using (var command = new SqliteCommand(sql, connection))
+                using (var command = new NpgsqlCommand(sql, connection))
                 {
                     try
                     {
@@ -531,7 +513,7 @@ public class SqliteLocal : ILocalDb
         }
     }
 
-    public static void InstallScript(SqliteConnection connection, string scriptPath)
+    public static void InstallScript(NpgsqlConnection connection, string scriptPath)
     {
         var script = File.ReadAllText(scriptPath);
         RunScript(connection, script);

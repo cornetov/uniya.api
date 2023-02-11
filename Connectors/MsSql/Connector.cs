@@ -324,7 +324,7 @@ public class MsSqlConnector : SqlConnector, ITransactedData
     /// <returns>The changed schema of the data.</returns>
     public async Task<ISchema> SetSchema(ITableSchema tableSchema)
     {
-        return await ReadSchema(tableSchema.TableName);
+        return await ReadSchema(tableSchema.Name);
     }
 
     #endregion
@@ -345,7 +345,7 @@ public class MsSqlConnector : SqlConnector, ITransactedData
     public async Task<ISchema> ReadSchema(params string[] tableNames)
     {
         // required?
-        if (_schema == null || DateTime.Now.Subtract(_schema.CreatedTime) > TimeSpan.FromMinutes(5))
+        if (_schema == null || DateTime.Now.Subtract(_schema.Created) > TimeSpan.FromMinutes(5))
         {
             // create
             _schema = new XSchema();
@@ -407,7 +407,7 @@ public class MsSqlConnector : SqlConnector, ITransactedData
                     }
                     else
                     {
-                        tableSchema = new XTableSchema() { TableName = column.TableName };
+                        tableSchema = new XTableSchema() { Name = column.TableName };
                         //tableSchema.SchemaName = column.SchemaName;
                         tables.Add(unique, _schema.Tables.Count);
                         _schema.Tables.Add(tableSchema);
@@ -418,7 +418,7 @@ public class MsSqlConnector : SqlConnector, ITransactedData
 
 
             // created time
-            _schema.CreatedTime = DateTime.Now;
+            _schema.Created = DateTime.Now;
         }
 
         // done

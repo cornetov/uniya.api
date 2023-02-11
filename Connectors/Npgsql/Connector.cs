@@ -1,26 +1,24 @@
 ﻿using System;
 using System.Linq;
-using System.Text;
-using System.Text.Json;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Data;
-using System.Data.Common;
 using System.Globalization;
 using System.Reflection;
 using System.Diagnostics;
 
-using Microsoft.Data.Sqlite;
+using Npgsql;
 
 using Uniya.Core;
 
-namespace Uniya.Connectors.Sqlite;
+namespace Uniya.Connectors.Npgsql;
 
-/// <summary>SQLite connector.</summary>
-public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
+/// <summary>MS SQL connector.</summary>
+/// <remarks>Host=localhost;Username=postgres;Password=s$cret;Database=testdb</remarks>
+public class NpgsqlConnector : SqlConnector, ITransactedData
 {
     // -------------------------------------------------------------------------------
-    #region ** fields & constructor
+    #region ** fields & contractor
 
     private string _connectionString;
     private ISchema _schema;
@@ -29,25 +27,17 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
     /// Connect to SQLite server.
     /// </summary>
     /// <param name="connection"></param>
-    public SqliteConnector(IConnection connection)
+    public NpgsqlConnector(IConnection connection)
     {
-        Connection = connection;
-        Init();
+        this.Connection = connection;
     }
     /// <summary>
-    /// Connect to SQLite server.
+    /// Connect to MS SQL server.
     /// </summary>
     /// <param name="connectionString"></param>
-    public SqliteConnector(string connectionString)
+    public NpgsqlConnector(string connectionString)
     {
         _connectionString = connectionString;
-        Init();
-    }
-
-    void Init()
-    {
-        ParameterWithName = true;
-        ParameterChar = '@';
     }
 
     #endregion
@@ -66,25 +56,12 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
         // empty initialization
         var collection = new XEntityCollection();
 
-        // command text
-        var sb = new StringBuilder();
-        foreach (var pair in pairs)
-        {
-            if (sb.Length > 0) sb.Append(',');
-            sb.Append(pair.Key).Append('=').Append(pair.Value);
-        }
-        if (sb.Length > 0)
-        {
-            sb.Insert(0, " WHERE ");
-        }
-        sb.Insert(0, $"SELECT * FROM [{entityName}]");
-
         // read selected
-        using (var connection = new SqliteConnection(ConnectionString))
+        using (var connection = new NpgsqlConnection(_connectionString))
         {
             await connection.OpenAsync();
             var cmd = connection.CreateCommand();
-            cmd.CommandText = sb.ToString();
+            cmd.CommandText = $"SELECT * FROM [{entityName}]";
             var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -107,7 +84,7 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
         var collection = new XEntityCollection();
 
         // read selected
-        using (var connection = new SqliteConnection(ConnectionString))
+        using (var connection = new NpgsqlConnection(_connectionString))
         {
             await connection.OpenAsync();
             var cmd = connection.CreateCommand();
@@ -115,12 +92,22 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
             var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                collection.Add(ReadEntity(query.EntityName, reader));
+                collection.Add(Read(query.EntityName, reader));
             }
         }
 
         // done
         return collection;
+    }
+
+    XEntity Read(string entityName, IDataReader reader)
+    {
+        var entity = new XEntity(entityName);
+        for (int i = 0; i < reader.FieldCount; i++)
+        {
+            entity.Items.Add(reader.GetName(i), reader.GetValue(i));
+        }
+        return entity;
     }
 
     #endregion
@@ -139,18 +126,18 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
         if (entities.Length == 0) return;
 
         // inserts
-        using (var connection = new SqliteConnection(ConnectionString))
+        using (var connection = new NpgsqlConnection(_connectionString))
         {
             await connection.OpenAsync();
             var cmd = connection.CreateCommand();
-            //var entityName = string.Empty;
+            var entityName = string.Empty;
 
             // TODO: INSERT BULK
 
             foreach (var entity in entities)
             {
                 // sanity
-                //if (entity.State != XEntityState.Created) continue;
+                if (entity.State != XEntityState.Created) continue;
 
                 // create insert command and add parameters
                 if (CmdInsert(cmd, entity))
@@ -182,28 +169,27 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
         if (entities.Length == 0) return;
 
         // updates
-        using (var connection = new SqliteConnection(ConnectionString))
+        using var connection = new NpgsqlConnection(_connectionString);
+
+        await connection.OpenAsync();
+        var cmd = connection.CreateCommand();
+        var entityName = string.Empty;
+
+        // TODO: UPDATE BULK
+
+        foreach (var entity in entities)
         {
-            await connection.OpenAsync();
-            var cmd = connection.CreateCommand();
-            var entityName = string.Empty;
+            // sanity
+            if (entity.State != XEntityState.Created) continue;
 
-            // TODO: UPDATE BULK
-
-            foreach (var entity in entities)
+            // create update command and add parameters
+            if (CmdUpdate(cmd, entity))
             {
-                // sanity
-                //if (entity.State != XEntityState.Created) continue;
+                // execute
+                await cmd.ExecuteScalarAsync();
 
-                // create update command and add parameters
-                if (CmdUpdate(cmd, entity))
-                {
-                    // execute
-                    await cmd.ExecuteScalarAsync();
-
-                    // last settings
-                    entity.Actualization();
-                }
+                // last settings
+                entity.Actualization();
             }
         }
     }
@@ -220,16 +206,14 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
     /// <returns>Without information.</returns>
     public async Task Delete(params XEntity[] entities)
     {
-        using (var connection = new SqliteConnection(ConnectionString))
+        using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync();
+        var cmd = connection.CreateCommand();
+        var entityName = string.Empty;
+        foreach (var entity in entities)
         {
-            await connection.OpenAsync();
-            var cmd = connection.CreateCommand();
-            var entityName = string.Empty;
-            foreach (var entity in entities)
-            {
-                if (CmdDelete(cmd, entity))
-                    await cmd.ExecuteNonQueryAsync();
-            }
+            if (CmdDelete(cmd, entity))
+                await cmd.ExecuteNonQueryAsync();
         }
     }
 
@@ -242,17 +226,15 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
     /// <returns>Without information.</returns>
     public async Task Delete(string entityName, string key, params object[] ids)
     {
-        using (var connection = new SqliteConnection(ConnectionString))
+        using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync();
+        var cmd = connection.CreateCommand();
+        cmd.CommandText = GetDelete(entityName, key);
+        foreach (var id in ids)
         {
-            await connection.OpenAsync();
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = GetDelete(entityName, key);
-            foreach (var id in ids)
-            {
-                cmd.Parameters.Clear();
-                cmd.Parameters.AddWithValue("@ID", id);
-                await cmd.ExecuteNonQueryAsync();
-            }
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@ID", id);
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 
@@ -268,54 +250,49 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
     /// <returns>Without information.</returns>
     public async Task Transaction(IEntitySet iset)
     {
-        using (var connection = new SqliteConnection(ConnectionString))
+        using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync();
+        using var transaction = connection.BeginTransaction();
+        var cmd = connection.CreateCommand();
+
+        // create
+        foreach (var entity in iset.Creating)
         {
-            await connection.OpenAsync();
-            using (var transaction = connection.BeginTransaction())
+            if (CmdInsert(cmd, entity))
             {
-                var cmd = connection.CreateCommand();
+                // execute
+                var id = await cmd.ExecuteScalarAsync();
 
-                // create
-                foreach (var entity in iset.Creating)
-                {
-                    if (CmdInsert(cmd, entity))
-                    {
-                        // execute
-                        var id = await cmd.ExecuteScalarAsync();
-
-                        // last settings
-                        if (id != null)
-                            entity.EntityId = id.ToString();
-                        entity.Actualization();
-                    }
-                }
-
-                // update
-                foreach (var entity in iset.Updating)
-                {
-                    if (CmdUpdate(cmd, entity))
-                    {
-                        // execute
-                        await cmd.ExecuteScalarAsync();
-
-                        // last settings
-                        entity.Actualization();
-                    }
-                }
-
-
-                // delete
-                var deleting = iset.Deleting;
-                foreach (var entity in deleting)
-                {
-                    if (CmdDelete(cmd, entity))
-                        await cmd.ExecuteNonQueryAsync();
-                }
-
-                // commit changes
-                transaction.Commit();
+                // last settings
+                if (id != null)
+                    entity.EntityId = id.ToString();
+                entity.Actualization();
             }
         }
+
+        // update
+        foreach (var entity in iset.Updating)
+        {
+            if (CmdUpdate(cmd, entity))
+            {
+                // execute
+                await cmd.ExecuteScalarAsync();
+
+                // last settings
+                entity.Actualization();
+            }
+        }
+
+
+        // delete
+        foreach (var entity in iset.Deleting)
+        {
+            if (CmdDelete(cmd, entity))
+                await cmd.ExecuteNonQueryAsync();
+        }
+
+        // commit changes
+        transaction.Commit();
     }
 
     #endregion
@@ -332,7 +309,6 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
     {
         return await ReadSchema(tableNames);
     }
-
     /// <summary>
     /// Sets table schema of the database.
     /// </summary>
@@ -340,7 +316,7 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
     /// <returns>The changed schema of the data.</returns>
     public async Task<ISchema> SetSchema(ITableSchema tableSchema)
     {
-        return null;
+        return await ReadSchema(tableSchema.Name);
     }
 
     #endregion
@@ -350,13 +326,13 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
 
     internal string ConnectionString
     {
-        get { return Connection != null ? XProxy.Decrypt(Connection.ComplexCode) : _connectionString; }
+        get { return this.Connection != null ? this.Connection.ComplexCode : _connectionString; }
     }
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="infos"></param>
+    /// <param name="tableNames"></param>
     /// <returns></returns>
     public async Task<ISchema> ReadSchema(params string[] tableNames)
     {
@@ -364,8 +340,7 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
         if (_schema == null || DateTime.Now.Subtract(_schema.Created) > TimeSpan.FromMinutes(5))
         {
             // create
-            _schema = XSet.Schema;
-            /*/_schema = new XSchema();
+            _schema = new XSchema();
 
             // table's cache
             var tables = new Dictionary<string, int>();
@@ -374,13 +349,9 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
             var sql = BuildSql(tableNames);
 
             // read selected
-            using (var connection = new SqliteConnection(ConnectionString))
+            using (var connection = new NpgsqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
-
-                //var table = connection.GetSchema("Tables", tableNames);
-                var table = connection.GetSchema("Tables");
-
                 var cmd = connection.CreateCommand();
                 cmd.CommandText = sql;
                 var reader = await cmd.ExecuteReaderAsync();
@@ -407,7 +378,7 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
                                 column.DataType = XEntity.GetDataType(value.ToString());
                                 break;
                             default:
-                                XReflection.SetValue(column, name, value);
+                                XProxy.SetValue(column, name, value);
                                 break;
                         }
                     }
@@ -428,7 +399,8 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
                     }
                     else
                     {
-                        tableSchema = new XTableSchema() { TableName = column.TableName };
+                        tableSchema = new XTableSchema() { Name = column.TableName };
+                        //tableSchema.SchemaName = column.SchemaName;
                         tables.Add(unique, _schema.Tables.Count);
                         _schema.Tables.Add(tableSchema);
                     }
@@ -436,9 +408,9 @@ public class SqliteConnector : SqlConnector, ITransactedData, IDesignData
                 }
             }
 
+
             // created time
-            _schema.CreatedTime = DateTime.Now;
-            */
+            _schema.Created = DateTime.Now;
         }
 
         // done

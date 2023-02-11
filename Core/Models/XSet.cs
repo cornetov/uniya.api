@@ -217,15 +217,16 @@ namespace Uniya.Core
         public XSet()
         {
             // base
-            //AddSet(Persons = new XSetCollection<IPerson>());
+            AddSet(Persons = new XSetCollection<IPerson>());
             AddSet(Users = new XSetCollection<IUser>());
             AddSet(Roles = new XSetCollection<IRole>());
             AddSet(UserRoles = new XSetCollection<IUserRole>());
             AddSet(UserSessions = new XSetCollection<IUserSession>());
 
-            //AddSet(Connections = new XSetCollection<IConnection>());
-            //AddSet(Tasks = new XSetCollection<ITask>());
-            //AddSet(Parameters = new XSetCollection<IParameter>());
+            AddSet(Connections = new XSetCollection<IConnection>());
+            AddSet(Tasks = new XSetCollection<ITask>());
+
+            AddSet(Parameters = new XSetCollection<IParameter>());
             AddSet(Scripts = new XSetCollection<IScript>());
         }
 
@@ -236,16 +237,16 @@ namespace Uniya.Core
         }
 
         // database model
-        //public XSetCollection<IPerson> Persons { get; private set; }
+        public XSetCollection<IPerson> Persons { get; private set; }
         public XSetCollection<IUser> Users { get; private set; }
         public XSetCollection<IRole> Roles { get; private set; }
         public XSetCollection<IUserRole> UserRoles { get; private set; }
         public XSetCollection<IUserSession> UserSessions { get; private set; }
 
         public XSetCollection<IConnection> Connections { get; private set; }
-        //public XSetCollection<ITask> Tasks { get; private set; }
+        public XSetCollection<ITask> Tasks { get; private set; }
 
-        //public XSetCollection<IParameter> Parameters { get; private set; }
+        public XSetCollection<IParameter> Parameters { get; private set; }
         public XSetCollection<IScript> Scripts { get; private set; }
 
         #endregion
@@ -370,16 +371,16 @@ namespace Uniya.Core
             {
                 case NotifyCollectionChangedAction.Add:
                     newText = (e.NewItems[0] != null) ? e.NewItems[0].ToString() : "NULL";
-                    Trace($"Добавлен новый объект: {newText}");
+                    Trace($"Added new object: {newText}");
                     break;
                 case NotifyCollectionChangedAction.Remove:
                     oldText = (e.OldItems[0] != null) ? e.OldItems[0].ToString() : "NULL";
-                    Trace($"Удален объект: {oldText}");
+                    Trace($"Removed the object: {oldText}");
                     break;
                 case NotifyCollectionChangedAction.Replace:
                     newText = (e.NewItems[0] != null) ? e.NewItems[0].ToString() : "NULL";
                     oldText = (e.OldItems[0] != null) ? e.OldItems[0].ToString() : "NULL";
-                    Trace($"Объект {oldText} заменен объектом {newText}");
+                    Trace($"Object {oldText} replaced ob object {newText}");
                     break;
             }
         }
@@ -392,21 +393,21 @@ namespace Uniya.Core
         public void Fill()
         {
             // --------------------------------------------------------------
-//            IPerson person;
+            IPerson person;
 
             var dtNow = DateTime.Now;
 
-//            person = XProxy.Get<IPerson>();
-//#if ID_GUID
-//            person.Id = Guid.Parse("d16f4eaf-1239-45b2-b212-3497cac73546");
-//#else
-//            person.Id = 1;
-//#endif
-//            person.FirstName = "Administrator";
-//            person.LastName = "Unknown";
-//            person.Created = dtNow;
-//            person.Modified = dtNow;
-//            Persons.Add(person);
+            person = XProxy.Get<IPerson>();
+#if ID_GUID
+            person.Id = Guid.Parse("d16f4eaf-1239-45b2-b212-3497cac73546");
+#else
+            person.Id = 1;
+#endif
+            person.FirstName = "Administrator";
+            person.LastName = "Unknown";
+            person.Created = dtNow;
+            person.Modified = dtNow;
+            Persons.Add(person);
 
             // --------------------------------------------------------------
             IUser user;
@@ -501,8 +502,8 @@ namespace Uniya.Core
             userRole.Id = Guid.Parse("df0d7cd1-60e2-4ab9-9caf-d11f7cdfd3ca");
             userRole.UserId = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
             userRole.RoleId = Guid.Parse("cc12dda6-c98a-4ec5-969b-793019c2ca3a");
-            userRole.CreatedUserId = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
-            userRole.ModifiedUserId = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
+            userRole.CreatedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+            userRole.ModifiedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
 #else
             userRole.Id = 1;
             userRole.UserId = 1;
@@ -517,66 +518,73 @@ namespace Uniya.Core
             UserRoles.Add(userRole);
 
             // --------------------------------------------------------------
-//            IConnection connection;
+            IConnection connection;
 
-//            connection = XProxy.Get<IConnection>();
-//#if ID_GUID
-//            connection.Id = Guid.Parse("c774b6ec-5cb6-4174-93a5-d13af6bd72fa");
-//            connection.CreatedUserId = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
-//            connection.ModifiedUserId = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
-//#else
-//            connection.Id = 1;
-//            connection.CreatedUserId = 1;
-//            connection.ModifiedUserId = 1;
-//#endif
-//            connection.Name = "base";
-//            connection.Title = "Base";
-//            connection.Description = "Default SQLite connection";
-//            connection.HostUrl = "https://api.triotour.com/";
-//            connection.ClassName = "Uniya.Connectors.Sqlite.SqliteConnector";
-//            connection.ComplexCode = XProxy.Encrypt(@"Data Source = (LocalDB)\mssqllocaldb; Initial Catalog = master; Integrated Security = True;");
-//            connection.IsActive = true;
-//            connection.Created = dtNow;
-//            connection.Modified = dtNow;
-//            Connections.Add(connection);
-
-            // --------------------------------------------------------------
-//            ITask task;
-
-//            task = XProxy.Get<ITask>();
-//#if ID_GUID
-//            task.Id = Guid.Parse("717c4df0-a4b3-4d75-b2b8-925658823efb");
-//#else
-//            task.Id = 1;
-//#endif
-//            task.Name = "Backup";
-//            task.Title = "Backup";
-//            task.Description = "Backup base storage";
-//            task.ClassName = "Uniya.Tasks.Backup";
-//            task.IsActive = false;
-//            task.Created = dtNow;
-//            task.CreatedUserId = 1;
-//            task.Modified = dtNow;
-//            task.ModifiedUserId = 1;
-//            task.Note = "Backup";
-//            Tasks.Add(task);
+            connection = XProxy.Get<IConnection>();
+#if ID_GUID
+            connection.Id = Guid.Parse("c774b6ec-5cb6-4174-93a5-d13af6bd72fa");
+            connection.CreatedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+            connection.ModifiedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+#else
+            connection.Id = 1;
+            connection.CreatedUserId = 1;
+            connection.ModifiedUserId = 1;
+#endif
+            connection.Name = "base";
+            connection.Title = "Base";
+            connection.Description = "Default SQLite connection";
+            connection.HostUrl = "https://api.triotour.com/";
+            connection.ClassName = "Uniya.Connectors.Sqlite.SqliteConnector";
+            connection.ComplexCode = XProxy.Encrypt(@"Data Source = (LocalDB)\mssqllocaldb; Initial Catalog = master; Integrated Security = True;");
+            connection.IsActive = true;
+            connection.Created = dtNow;
+            connection.Modified = dtNow;
+            Connections.Add(connection);
 
             // --------------------------------------------------------------
-            //IParameter parameter;
+            ITask task;
 
-            //parameter = XProxy.Get<IParameter>();
-            //parameter.Id = 1;
-            //parameter.Name = "LastRegistryDate";
-            //parameter.Title = "Registry date";
-            //parameter.Description = "Last date and time of change registry";
-            //parameter.Created = dtNow;
-            //parameter.CreatedUserId = 1;
-            //parameter.Modified = dtNow;
-            //parameter.ModifiedUserId = 1;
-            //parameter.Value = "2019-08-15T17:00:00";
-            //parameter.Note = "Backup";
-            //Parameters.Add(parameter);
+            task = XProxy.Get<ITask>();
+#if ID_GUID
+            task.Id = Guid.Parse("7b6473dc-6e0b-446c-aff8-500e55e64127");
+            task.CreatedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+            task.ModifiedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+#else
+            task.Id = 1;
+            task.CreatedUserId = 1;
+            task.ModifiedUserId = 1;
+#endif
+            task.Name = "Backup";
+            task.Title = "Backup";
+            task.Description = "Backup base storage";
+            task.ClassName = "Uniya.Tasks.Backup";
+            task.IsActive = false;
+            task.Created = dtNow;
+            task.Modified = dtNow;
+            task.Note = "Backup";
+            Tasks.Add(task);
 
+            // --------------------------------------------------------------
+            IParameter parameter;
+
+            parameter = XProxy.Get<IParameter>();
+#if ID_GUID
+            parameter.Id = Guid.Parse("60130f07-9b04-480c-aec2-f790230e6b22");
+            parameter.CreatedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+            parameter.ModifiedUserId = Guid.Parse("64cb86fe-58cf-4c3a-bfe7-d54cbefbaf38");
+#else
+            parameter.Id = 1;
+            parameter.CreatedUserId = 1;
+            parameter.ModifiedUserId = 1;
+#endif
+            parameter.Name = "LastRegistryDate";
+            parameter.Title = "Registry date";
+            parameter.Description = "Last date and time of change registry";
+            parameter.Created = dtNow;
+            parameter.Modified = dtNow;
+            parameter.Value = "2019-08-15T17:00:00";
+            parameter.Note = "Backup";
+            Parameters.Add(parameter);
 
             //INSERT INTO[Person] ([Id], [FirstName], [SecondName], [LastName], [Birthday], [Phone], [Email], [Created], [Modified], [Note])
             //AddPerson(1, "Admin", "", "Unknown", "1970-04-26T09:00:01", "", "", "2019-08-15T17:00:02", "2019-08-15T17:00:02", "Fake person");
