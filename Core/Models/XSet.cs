@@ -490,53 +490,6 @@ public class XSet : IEntitySet
         connection.ModifiedUserId = 1;
         Connections.Add(connection);
 
-        connection = XProxy.Get<IConnection>();
-        connection.Id = 2;
-        connection.Name = "trio_tour";
-        connection.Title = "triotour.com";
-        connection.Description = "Company TrioTour MS SQL connection";
-        connection.HostUrl = "https://api.triotour.com/api/data/trio_tour";
-        connection.ClassName = "Uniya.Connectors.MsSql.MsSqlConnector";
-        connection.ComplexCode = XProxy.Encrypt("data source=ms-sql-7.in-solve.ru;initial catalog=1gb_uniya2;User ID=1gb_triotour;Password=b7ac0e623rty;");
-        connection.IsActive = false;
-        connection.Created = dtNow;
-        connection.CreatedUserId = 1;
-        connection.Modified = dtNow;
-        connection.ModifiedUserId = 1;
-        Connections.Add(connection);
-
-        connection = XProxy.Get<IConnection>();
-        connection.Id = 3;
-        connection.Name = "practic_share_point";
-        connection.Title = "SharePoint Register";
-        connection.Description = "SharePoint Register connection";
-        connection.HostUserName = "VDoroshenko@a-practic.ru";
-        connection.HostPassword = XProxy.Encrypt("Practic8");
-        connection.HostUrl = "https://practic.sharepoint.com/sites/register";
-        connection.ClassName = "Uniya.Connectors.SharePoint.SharePointConnector";
-        connection.ComplexCode = XProxy.Encrypt("VDoroshenko@a-practic.ru|Practic8");
-        connection.IsActive = true;
-        connection.Created = dtNow;
-        connection.CreatedUserId = 1;
-        connection.Modified = dtNow;
-        connection.ModifiedUserId = 1;
-        Connections.Add(connection);
-
-        connection = XProxy.Get<IConnection>();
-        connection.Id = 4;
-        connection.Name = "finguru_bitrix24";
-        connection.Title = "SharePoint Register";
-        connection.Description = "SharePoint Register connection";
-        connection.HostUrl = "https://portal.finguru.com/api";
-        connection.ClassName = "Uniya.Connectors.Bitrix24.Bitrix24Connector";
-        connection.ComplexCode = XProxy.Encrypt("local.57fe05cb295182.55185886|6MTR5Go2xRVjWcHfTlKhvM5AshunytE9Ml739omM66z92jwVHv");
-        connection.IsActive = false;
-        connection.Created = dtNow;
-        connection.CreatedUserId = 1;
-        connection.Modified = dtNow;
-        connection.ModifiedUserId = 1;
-        Connections.Add(connection);
-
         // --------------------------------------------------------------
         ITask task;
 
