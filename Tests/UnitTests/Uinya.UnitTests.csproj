@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RuntimeFrameworkVersion>2.1</RuntimeFrameworkVersion>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants)TRACE;SERVER</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>$(DefineConstants)TRACE;SERVER</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.NETCore.App" Version="2.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.1.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.4.0" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Connectors\MsSql\Uniya.Connectors.MsSql.csproj" />
+    <ProjectReference Include="..\..\Connectors\Npgsql\Uniya.Connectors.Npgsql.csproj" />
+    <ProjectReference Include="..\..\Connectors\Sqlite\Uniya.Connectors.Sqlite.csproj" />
+    <ProjectReference Include="..\..\Core\Uniya.Core.csproj" />
+  </ItemGroup>
+
+ </Project>

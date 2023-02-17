@@ -7,6 +7,8 @@ Connectors/Sqlite/obj
 Connectors/Sqlite/bin
 Connectors/MsSql/obj
 Connectors/MsSql/bin
+Tests/UnitTests/bin
+Tests/UnitTests/obj
 Tests/Core/bin
 Tests/Core/obj
 *.dll
@@ -15,3 +17,8 @@ Tests/Core/obj
 Web/ClientApp/package-lock.json
 Web/ClientApp/.env
 Web/ClientApp/.env.development
+Maui/.vs
+Maui/bin
+Maui/obj
+Connectors/Npgsql/obj
+Connectors/Npgsql/bin

@@ -13,7 +13,7 @@ using Uniya.Core;
 
 namespace Uniya.Connectors.Npgsql;
 
-/// <summary>MS SQL connector.</summary>
+/// <summary>PostgreSQL connector.</summary>
 /// <remarks>Host=localhost;Username=postgres;Password=s$cret;Database=testdb</remarks>
 public class NpgsqlConnector : SqlConnector, ITransactedData
 {
@@ -100,7 +100,7 @@ public class NpgsqlConnector : SqlConnector, ITransactedData
         return collection;
     }
 
-    XEntity Read(string entityName, IDataReader reader)
+    static XEntity Read(string entityName, IDataReader reader)
     {
         var entity = new XEntity(entityName);
         for (int i = 0; i < reader.FieldCount; i++)
