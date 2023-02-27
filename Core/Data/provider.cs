@@ -8,56 +8,154 @@ using System.Threading.Tasks;
 using System.Globalization;
 using System.Reflection;
 using System.Net.Mail;
+using System.Diagnostics;
+using System.Dynamic;
+using System.Text.Json.Serialization;
+using System.Xml.Linq;
+using System.Text.RegularExpressions;
 
 namespace Uniya.Core;
 
 /// <summary>The data provider.</summary>
 public class XProvider
 {
-    static Dictionary<string, IReadonlyData> _sources = new Dictionary<string, IReadonlyData>();
+    // ------------------------------------------------------------------------------------
+    #region ** fields & constructor
 
-    public static IReadonlyData GetData(string source)
+    //string _id;
+    private ISchema _schema;
+    private ILocalDb _local;
+    private readonly ITransactedData _main;
+    private Dictionary<string, KeyValuePair<IConnection, IReadonlyData>> _dbs = new();
+
+    //private string _entityName;
+    //static ObservableCollection<KeyValuePair<string, string>> _names = new ObservableCollection<KeyValuePair<string, string>>();
+    //static ObservableCollection<KeyValuePair<string, string>> _names = new ObservableCollection<KeyValuePair<string, string>>();
+
+    /// <summary>
+    /// The main database provider.
+    /// </summary>
+    /// <param name="data"></param>
+    protected XProvider(ITransactedData data)
     {
-        if (_sources.ContainsKey(source))
+        _main = data;
+    }
+
+    #endregion
+
+    // ------------------------------------------------------------------------------------
+    #region ** main database
+
+    public IReadonlyData GetData(string database)
+    {
+        if (_dbs.ContainsKey(database))
         {
-            return _sources[source];
+            return _dbs[database].Value;
         }
         return null;
     }
-    public static void SetData(string source, IReadonlyData data)
+    //public void SetData(string database, IReadonlyData data)
+    //{
+    //    if (string.IsNullOrWhiteSpace(database))
+    //    {
+    //        throw new ArgumentNullException(nameof(database));
+    //    }
+    //    if (data == null)
+    //    {
+    //        throw new ArgumentNullException(nameof(data));
+    //    }
+    //    if (_dbs.ContainsKey(database))
+    //    {
+    //        _dbs[database] = data;
+    //    }
+    //    else
+    //    {
+    //        _dbs.Add(database, data);
+    //    }
+    //}
+
+    #endregion
+
+    // ------------------------------------------------------------------------------------
+    #region ** object model
+
+    public async Task<IReadOnlyList<string>> GetDatabases(string mask = null)
     {
-        if (data == null)
+        // initialization
+        if (_dbs.Count == 0)
         {
-            throw new ArgumentNullException(nameof(data));
+            foreach (var entity in await _main.Read("Connection"))
+            {
+                var connection = entity.To<IConnection>();
+                _dbs.Add(connection.Name, new KeyValuePair<IConnection, IReadonlyData>(connection, null));
+            }
         }
-        if (string.IsNullOrWhiteSpace(source))
+
+        // empty mask
+        if (string.IsNullOrWhiteSpace(mask))
         {
-            throw new ArgumentNullException(nameof(source));
+            // all names
+            return _dbs.Keys.ToList();
         }
-        if (_sources.ContainsKey(source))
-        {
-            _sources[source] = data;
-        }
-        else
-        {
-            _sources.Add(source, data);
-        }
+
+        // mask pattern
+        var rx = MaskToRegex(mask);
+
+        // done
+        return _dbs.Keys.Where(x => rx.IsMatch(x)).ToList();
     }
-    public static async Task<ITransactedData> LocalDatabase(string source, ILocalDb db)
+
+    public async Task<IReadOnlyList<string>> GetTables(string database, string mask = null)
+    {
+        // initialization
+        var databases = await GetDatabases(database);
+        if (databases.Count == 0)
+        {
+            foreach (var entity in await _main.Read("Connection"))
+            {
+                var connection = entity.To<IConnection>();
+                _dbs.Add(connection.Name, new KeyValuePair<IConnection, IReadonlyData>(connection, null));
+            }
+        }
+
+        // empty mask
+        if (string.IsNullOrWhiteSpace(mask))
+        {
+            // all names
+            return _dbs.Keys.ToList();
+        }
+
+        // mask pattern
+        var rx = MaskToRegex(mask);
+
+        // done
+        return _dbs.Keys.Where(x => rx.IsMatch(x)).ToList();
+    }
+
+    #endregion
+
+    // ------------------------------------------------------------------------------------
+    #region ** static object model
+
+    public static async Task<XProvider> LocalDatabase(ILocalDb db)
     {
         // sanity
         if (db == null)
         {
             throw new ArgumentNullException(nameof(db));
         }
-        if (string.IsNullOrWhiteSpace(source))
-        {
-            throw new ArgumentNullException(nameof(source));
-        }
 
-        // initialization
-        ITransactedData data = null;
-        if (!db.IsExist)
+        // schema
+        ISchema schema = null;
+
+        // exist database?
+        if (db.IsExist)
+        {
+            // TODO: read schema
+            //db.
+            schema = XSet.Schema;
+        }
+        else
         {
             // create new local database
             if (!await db.Create())
@@ -66,24 +164,34 @@ public class XProvider
                 return null;
             }
 
-            // transacted access
-            data = db.Data;
-
             // create SQL script by model
             var xset = new XSet();
-            var script = db.GetSqlScript(XSet.Schema);
+            schema = XSet.Schema;
+            var script = db.GetSqlScript(schema);
             await db.RunScript(script);
 
             // fill start database
             xset.Fill();
-            await xset.CommitChanges(data);
+            await xset.CommitChanges(db.Data);
         }
 
+        // initialization provider
+        XProvider provider = new(db.Data)
+        {
+            _schema = schema,
+            _local = db
+        };
+
         // done
-        return data;
+        return provider;
     }
 
- 
+    public static Regex MaskToRegex(string mask)
+    {
+        var m = "^" + Regex.Escape(mask).Replace("\\*", ".*").Replace("\\?", ".") + "$";
+        return new Regex(m, RegexOptions.IgnoreCase);
+    }
+
     static Dictionary<string, Type> _types;
 
     internal static Type GetConnectorType(string className)
@@ -117,4 +225,6 @@ public class XProvider
         }
         return null;
     }
+
+    #endregion
 }

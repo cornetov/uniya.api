@@ -40,8 +40,8 @@ public class UserService : IUserService
     //public string Login(string login, string password)
     public UserToken Login(IUser user)
     {
-        var userToken = _jwtService.GenerateToken(user);
         // create session
+        var userToken = _jwtService.GenerateToken(user);
         return userToken;
     }
     public UserToken Refresh(UserToken userToken)

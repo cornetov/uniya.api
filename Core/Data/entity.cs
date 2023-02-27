@@ -13,6 +13,10 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
 using System.Reflection;
+using Microsoft.VisualBasic;
+using System.Data;
+using System.Linq;
+using System.Xml;
 
 namespace Uniya.Core;
 
@@ -71,7 +75,7 @@ public class XEntity : DynamicObject
     {
         if (entityName == null)
         {
-            throw new ArgumentNullException("entityName");
+            throw new ArgumentNullException(nameof(entityName));
         }
         var collection = XSet.Schema.Tables as XCollection<ITableSchema, string>;
         var tableSchema = collection.GetBy(entityName);
@@ -94,11 +98,7 @@ public class XEntity : DynamicObject
     public XEntity(ITableSchema schema)
         : this()
     {
-        if (schema == null)
-        {
-            throw new ArgumentNullException("schema");
-        }
-        this.Schema = schema;
+        this.Schema = schema ?? throw new ArgumentNullException("schema");
         this.State = XEntityState.Created;
     }
 
@@ -2009,7 +2009,7 @@ public partial class XEntityReference : IEntityReference
     /// <returns>A string that represents the current object.</returns>
     public override string ToString()
     {
-        // initialzation
+        // initialization
         var id = string.IsNullOrEmpty(Id) ? string.Empty : Id;
         var text = string.IsNullOrWhiteSpace(Text) ? string.Empty : Text;
         var name = string.IsNullOrWhiteSpace(EntityName) ? string.Empty : EntityName;
@@ -2038,7 +2038,7 @@ public partial class XEntityReferenceCollection : ObservableCollection<XEntityRe
 /// <summary>
 /// The order enumeration type specifies.
 /// </summary>
-public enum XOrderType
+public enum XOrderType : byte
 {
     /// <summary>
     /// Specifies that the values of the specified attribute should be sorted in
@@ -2054,7 +2054,7 @@ public enum XOrderType
 /// <summary>
 /// The logical enumeration type specifies.
 /// </summary>
-public enum XLogicalOperator
+public enum XLogicalOperator : byte
 {
     /// <summary>Specifies that a logical AND operation is performed.</summary>
     And = 0,
@@ -2064,7 +2064,7 @@ public enum XLogicalOperator
 /// <summary>
 /// The join enumeration type specifies.
 /// </summary>
-public enum XJoinOperator
+public enum XJoinOperator : byte
 {
     /// <summary>
     /// Specifies that the values in the attributes being joined are compared using
@@ -2085,7 +2085,7 @@ public enum XJoinOperator
 /// <summary>
 /// The ConditionOperator enumeration type specifies the possible values for the condition operator in a condition expression.
 /// </summary>
-public enum XConditionOperator
+public enum XConditionOperator : byte
 {
     /// <summary>Specifies that two expressions are compared for equality.</summary>
     Equal = 0,
@@ -2340,12 +2340,17 @@ public partial class XPagingInfo
     public bool ReturnTotalCount { get; set; }
 }
 
+#endregion
+
 /// <summary>
 ///  Retrieves instances of a specific entity type by using a complex query.
 /// </summary>
 /// <remarks>Warning! Not supported links between multiple entity.</remarks>
 public partial class XQuery
 {
+    // -------------------------------------------------------------------------
+    #region ** object model
+
     /// <summary>
     /// Default initialization.
     /// </summary>
@@ -2433,7 +2438,10 @@ public partial class XQuery
         Orders.Add(new XOrder(itemName, orderType));
     }
 
-    // ** static methods
+    #endregion
+
+    // -------------------------------------------------------------------------
+    #region ** static object model
 
     /// <summary>
     /// Convert value to OData text.
@@ -2443,27 +2451,27 @@ public partial class XQuery
     public static string ToText(object value)
     {
         // text?
-        if (value is string)
+        if (value is string s)
         {
-            return XEntity.AddQuotes((string)value);
+            return XEntity.AddQuotes(s);
         }
 
         // GUID?
-        if (value is Guid)
+        if (value is Guid guid)
         {
-            return ((Guid)value).ToString("D");
+            return guid.ToString("D");
         }
 
         // date & time?
-        if (value is DateTime)
+        if (value is DateTime dt)
         {
-            return ((DateTime)value).ToString("s");
+            return dt.ToString("s");
         }
 
         // boolean?
-        if (value is bool)
+        if (value is bool b)
         {
-            return ((bool)value) ? "true" : "false";
+            return b ? "true" : "false";
         }
 
         // integer?
@@ -2482,7 +2490,49 @@ public partial class XQuery
         return "null";
     }
 
-    // ** text query
+    public static XQuery FromOData(ISchema schema, string table, string query)
+    {
+        var collection = schema.Tables as XCollection<ITableSchema, string>;
+        var tableSchema = collection.GetBy(table);
+        if (tableSchema != null)
+        {
+            query = query.Trim();
+            var q = new XQuery(table);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                Dictionary<string, string> queryOptions = new();
+                var splitText = "&";
+                if (query[0] == '$')
+                {
+                    query = query[1..];
+                    splitText = "&$";
+                }
+                var key = string.Empty;
+                foreach (var part in query.Split(splitText))
+                {
+                    int idx = part.IndexOf('=');
+                    if (idx < 0)
+                    {
+                        queryOptions[key] += part;
+                    }
+                    else
+                    {
+                        key = part[..idx].ToLower();
+                        queryOptions.Add(key, part[idx..]);
+                    }
+                }
+                //ODataQueryParser parser = new(schema, q, queryOptions);
+                //parser.
+            }
+            return q;
+        }
+        return null;
+    }
+
+    #endregion
+
+    // -------------------------------------------------------------------------
+    #region ** to text
 
     /// <summary>Gets SQL code for the query expression.</summary>
     /// <returns>The query SQL code.</returns>
@@ -2508,7 +2558,10 @@ public partial class XQuery
         return sb.ToString();
     }
 
-    // ** OData implementation
+    #endregion
+
+    // -------------------------------------------------------------------------
+    #region ** to text OData implementation
 
     void AppendSelect(StringBuilder sb)
     {
@@ -2555,9 +2608,13 @@ public partial class XQuery
         {
             var link = Links[i];
             if (i == 0)
+            {
                 sb.Append("$expand=");
+            }
             else
+            {
                 sb.Append(',');
+            }
             if (EntityName != link.FromEntityName)
             {
                 sb.Append(link.FromEntityName).Append('/');
@@ -2655,11 +2712,259 @@ public partial class XQuery
                 break;
         }
     }
+
+    #endregion
+}
+
+// -----------------------------------------------------------------------------
+#region ** OData query parser
+
+/// <summary>Parser for query.</summary>
+internal class ODataQueryParser
+{
+    ISchema _schema;
+    ITableSchema _tableSchema;
+    readonly bool _useDollar = false;
+    Dictionary<string, string> _options = new();
+
+    public ODataQueryParser(ISchema schema, string table, string query)
+    {
+        var collection = schema.Tables as XCollection<ITableSchema, string>;
+        _tableSchema = collection.GetBy(table.Trim(' ', '('));
+        if (_tableSchema == null)
+        {
+            throw new XSchemaException($"Table {table} not found", table);
+        }
+        _schema = schema;
+        query = query.Trim();
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var splitText = "&";
+            if (query[0] == '$')
+            {
+                _useDollar = true;
+                query = query[1..];
+                splitText = "&$";
+            }
+            var key = string.Empty;
+            foreach (var part in query.Split(splitText))
+            {
+                int idx = part.IndexOf('=');
+                if (idx < 0)
+                {
+                    _options[key] += part;
+                }
+                else
+                {
+                    key = part[..idx].ToLower();
+                    _options.Add(key, part[idx..]);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// ParseSelectAndExpand from an instantiated class
+    /// </summary>
+    /// <returns>A SelectExpandClause with the semantic representation of select and expand terms</returns>
+    public string[] ParseSelect()
+    {
+        List<string> list = new();
+        if (_options.TryGetValue("select", out string text))
+        {
+            // parse column names
+            foreach (var part in text.Split(','))
+            {
+                // column name?
+                var name = part.Trim();
+
+                // compare with schema
+                var collection = _tableSchema.Columns as XCollection<IColumnSchema, string>;
+                var columnSchema = collection.GetBy(name);
+                if (columnSchema == null)
+                {
+                    throw new XSchemaException($"Column {name} not found", name);
+                }
+                list.Add(name);
+            }
+        }
+        return list.ToArray();
+    }
+
+    public IColumnSchema ParseExpand()
+    {
+        if (_options.TryGetValue("expand", out string text))
+        {
+            // parse column names
+            foreach (var part in text.Split(','))
+            {
+                // table/column
+                var ss = part.Trim().Split('/');
+                var table = ss[0].Trim();
+                if (string.IsNullOrWhiteSpace(table))
+                {
+                    throw new XSchemaException($"Incorrect expand", table);
+                }
+                var name = (ss.Length > 1) ? ss[1].Trim() : $"{table}Id";
+
+                // test table
+                var tables = _schema.Tables as XCollection<ITableSchema, string>;
+                var tableSchema = tables.GetBy(table);
+                if (tableSchema == null)
+                {
+                    throw new XSchemaException($"Table {table} not found", table);
+                }
+
+                // compare with schema
+                var columns = _tableSchema.Columns as XCollection<IColumnSchema, string>;
+                var columnSchema = columns.GetBy(name);
+                if (columnSchema == null)
+                {
+                    throw new XSchemaException($"Column {name} not found", name);
+                }
+                if (table.Equals(columnSchema.ForeignTable))
+                {
+                    return columnSchema;
+                }
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Parses an orderBy on the given full query.
+    /// </summary>
+    /// <returns>A <see cref="XOrderType"/> value.</returns>
+    public bool ParseOrderBy(out IColumnSchema columnSchema, out XOrderType orderType)
+    {
+        columnSchema = null;
+        orderType = (XOrderType)0xff;
+
+        if (_options.TryGetValue("orderby", out string text))
+        {
+            // column
+            orderType = (XOrderType)0xff;
+            var ss = text.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (ss.Length > 1)
+            {
+                switch (ss[1].ToLower())
+                {
+                    case "asc":
+                        orderType = XOrderType.Ascending;
+                        break;
+                    case "desc":
+                        orderType = XOrderType.Descending;
+                        break;
+                }
+            }
+
+            // compare with schema
+            var columns = _tableSchema.Columns as XCollection<IColumnSchema, string>;
+            columnSchema = columns.GetBy(ss[0]);
+            if (columnSchema == null || orderType == (XOrderType)0xff)
+            {
+                throw new XSchemaException($"Incorrect orderBy", text);
+            }
+            //return (columnSchema, orderType);
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Parses a $top query option
+    /// </summary>
+    /// <returns>A value representing that top option, null if $top query does not exist.</returns>
+    public bool ParseTop(out long value)
+    {
+        value = -1;
+        if (!_options.TryGetValue("top", out string text))
+        {
+            return false;
+        }
+        if (!long.TryParse(text, out value))
+        {
+            throw new XSchemaException($"Incorrect top", text);
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Parses a $skip query option.
+    /// </summary>
+    /// <param name="value">A skip value.</param>
+    /// <returns>A value representing that skip option.</returns>
+    /// <exception cref="XSchemaException">If incorrect skip.</exception>
+    public bool ParseSkip(out long value)
+    {
+        value = -1;
+        if (!_options.TryGetValue("skip", out string text))
+        {
+            return false;
+        }
+        if (!long.TryParse(text, out value))
+        {
+            throw new XSchemaException($"Incorrect skip", text);
+        }
+        return true;
+    }
+
+    ///// <summary>
+    ///// Parses a $index query option
+    ///// </summary>
+    ///// <returns>A value representing that index option, null if $index query does not exist.</returns>
+    //public long? ParseIndex()
+    //{
+    //    string indexQuery;
+    //    return this.TryGetQueryOption(UriQueryConstants.IndexQueryOption, out indexQuery) ? ParseIndex(indexQuery) : null;
+    //}
+
+    ///// <summary>
+    ///// Parses a $count query option
+    ///// </summary>
+    ///// <returns>A count representing that count option, null if $count query does not exist.</returns>
+    //public bool? ParseCount()
+    //{
+    //    string countQuery;
+    //    return this.TryGetQueryOption(UriQueryConstants.CountQueryOption, out countQuery) ? ParseCount(countQuery) : null;
+    //}
+
+    ///// <summary>
+    ///// Parses the $search.
+    ///// </summary>
+    ///// <returns>SearchClause representing $search.</returns>
+    //public SearchClause ParseSearch()
+    //{
+    //    if (this.searchClause != null)
+    //    {
+    //        return this.searchClause;
+    //    }
+
+    //    string searchQuery;
+    //    if (!this.TryGetQueryOption(UriQueryConstants.SearchQueryOption, out searchQuery)
+    //        || searchQuery == null)
+    //    {
+    //        return null;
+    //    }
+
+    //    this.searchClause = ParseSearchImplementation(searchQuery, this.Configuration);
+    //    return searchClause;
+    //}
+
+    ///// <summary>
+    ///// Parses a $skiptoken query option
+    ///// </summary>
+    ///// <returns>A value representing that skip token option, null if $skiptoken query does not exist.</returns>
+    //public string ParseSkipToken()
+    //{
+    //    string skipTokenQuery;
+    //    return this.TryGetQueryOption(UriQueryConstants.SkipTokenQueryOption, out skipTokenQuery) ? skipTokenQuery : null;
+    //}
 }
 
 #endregion
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 #region ** option set and formatted value
 
 /// <summary>
@@ -2699,8 +3004,7 @@ public partial class XOptionSetValue
     /// <returns>Create new <see cref="XOptionSetValue"/> object or <see cref="ArgumentOutOfRangeException"/>.</returns>
     public static XOptionSetValue Parse(string text)
     {
-        XOptionSetValue optionSet;
-        if (!TryParse(text, out optionSet))
+        if (!TryParse(text, out XOptionSetValue optionSet))
         {
             throw new ArgumentOutOfRangeException("text");
         }
@@ -2731,12 +3035,13 @@ public partial class XOptionSetValue
         if (txtIdx < 0) txtIdx = text.Length;
 
         // parse
-        int value;
-        if (int.TryParse(text.Substring(5, txtIdx - 5), out value))
+        if (int.TryParse(text.AsSpan(5, txtIdx - 5), out int value))
         {
             optionSet = new XOptionSetValue(value);
             if (txtIdx > 0 && txtIdx < text.Length)
-                optionSet.Text = text.Substring(txtIdx + 6).Trim();
+            {
+                optionSet.Text = text[(txtIdx + 6)..].Trim();
+            }
         }
 
         // done
@@ -2848,7 +3153,7 @@ public partial class XFormattedValue
 
 #endregion
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 #region ** collection extensions
 
 public static class CollectionExtensions

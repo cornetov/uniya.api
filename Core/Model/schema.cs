@@ -243,6 +243,9 @@ public interface ITableSchema : ITable
     /// <param name="itemName">The item (attribute) logical name.</param>
     /// <returns>The column schema.</returns>
     IColumnSchema GetColumnSchema(string itemName);
+
+    /// <summary>Gets or sets plural table name.</summary>
+    string PluralName { get; set; }
 }
 
 /// <summary>

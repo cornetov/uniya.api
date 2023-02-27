@@ -477,6 +477,9 @@ public partial class XTableSchema : ITableSchema
     /// <summary>Gets or sets the view .NET format using column name as {%column%} of the table (entity).</summary>
     public string ViewFormat { get; set; }
 
+    /// <summary>Gets or sets plural table name.</summary>
+    public string PluralName { get; set; }
+
     ///// <summary>Gets or sets text relation for the many to many table (entity).</summary>
     ///// <remarks>Format of many to many relation: four names for each relation.</remarks>
     //public string ManyToMany { get; set; }
