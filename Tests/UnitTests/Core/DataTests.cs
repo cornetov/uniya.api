@@ -19,7 +19,7 @@ namespace Uniya.UnitTests.UnitTests
     [TestClass]
     public class DataTests
     {
-        ITransactedData data;
+        XProvider _provider;
 
         internal void Init()
         {
@@ -35,7 +35,8 @@ namespace Uniya.UnitTests.UnitTests
         [Description("DB: Create database.")]
         public async Task Data_Create()
         {
-            data = await XProvider.LocalDatabase("test", new SqliteLocal());
+            //data = await XProvider.LocalDatabase("test", new SqliteLocal());
+            _provider = await XProvider.LocalDatabase(new SqliteLocal());
         }
 
         /// <summary></summary>
